@@ -32,6 +32,7 @@ export async function login() {
   if (!code) {
     let redirect = new URL('https://github.com/login/oauth/authorize');
     redirect.searchParams.set('client_id', CLIENT_ID);
+    redirect.searchParams.set('scope', 'repo notifications read:user');
     if (process.env.NODE_ENV !== 'production') {
       redirect.searchParams.set('redirect_uri', `https://github-lite.pages.dev/login?redirect=${location.href}`);
     }
