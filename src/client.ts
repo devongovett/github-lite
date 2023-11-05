@@ -27,14 +27,20 @@ export function preload(query: string, options: Record<string, unknown>) {
 }
 
 export async function login() {
-  let code = new URL(location.href).searchParams.get("code");
+  let url = new URL(location.href);
+  let code = url.searchParams.get('code');
   if (!code) {
-    location.replace(`https://github.com/login/oauth/authorize?client_id=${CLIENT_ID}&scope=repo&redirect=${location.href}`);
+    let redirect = new URL('https://github.com/login/oauth/authorize');
+    redirect.searchParams.set('client_id', CLIENT_ID);
+    if (process.env.NODE_ENV !== 'production') {
+      redirect.searchParams.set('redirect_uri', `https://github-lite.pages.dev/login?redirect=${location.href}`);
+    }
+    location.replace(redirect);
     return;
   }
 
   try {
-    let res = await fetch('/login', {
+    let res = await fetch('https://github-lite.pages.dev/login', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
@@ -49,7 +55,9 @@ export async function login() {
     }
 
     localStorage.token = json.token;
-    // location.reload();
+
+    url.searchParams.delete('code');
+    location.replace(url)
   } catch (err) {
     console.log(err);
     // location.reload();

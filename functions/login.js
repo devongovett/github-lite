@@ -34,3 +34,14 @@ export async function onRequestPost({request, env}) {
     });
   }
 }
+
+export async function onRequestGet({request}) {
+  // Used during local development to redirect back to localhost.
+  let url = new URL(request.url);
+  let redirect = url.searchParams.get('redirect');
+  if (redirect.startsWith('http://localhost')) {
+    return new Response.redirect(redirect);
+  }
+
+  return new Response('Redirect not allowed', {status: 400});
+}
