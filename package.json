@@ -1,0 +1,31 @@
+{
+  "scripts": {
+    "start": "parcel src/index.html",
+    "build": "parcel build src/index.html"
+  },
+  "dependencies": {
+    "@adobe/react-spectrum": "^3.31.1",
+    "@octokit/graphql": "^7.0.2",
+    "@octokit/graphql-schema": "^14.39.0",
+    "@octokit/rest": "^20.0.2",
+    "@primer/octicons-react": "^19.8.0",
+    "@spectrum-icons/workflow": "^4.2.6",
+    "@types/react": "^18.2.34",
+    "@types/react-dom": "^18.2.14",
+    "markdown-to-jsx": "^7.3.2",
+    "react": "^18",
+    "react-aria-components": "^1.0.0-beta.2",
+    "react-dom": "^18",
+    "react-router-dom": "^6.17.0",
+    "swr": "^2.2.4",
+    "tailwindcss-react-aria-components": "^1.0.0-beta.1"
+  },
+  "devDependencies": {
+    "@types/markdown-to-jsx": "^7.0.1",
+    "parcel": "latest",
+    "postcss": "^8.4.24",
+    "process": "^0.11.10",
+    "tailwind-dark-aware": "^0.3.0",
+    "tailwindcss": "^3.3.2"
+  }
+}

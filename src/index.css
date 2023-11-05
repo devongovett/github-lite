@@ -1,0 +1,7 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+p > code {
+  @apply border border-daw-gray-200 rounded px-1 bg-daw-gray-50;
+}
