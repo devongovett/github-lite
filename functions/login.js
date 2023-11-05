@@ -35,6 +35,16 @@ export async function onRequestPost({request, env}) {
   }
 }
 
+export async function onRequestOptions() {
+  return new Response(null, {
+    headers: {
+      "Access-Control-Allow-Origin": "*",
+      "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+      "Access-Control-Allow-Headers": "Content-Type",
+    },
+  });
+}
+
 export async function onRequestGet({request}) {
   // Used during local development to redirect back to localhost.
   let url = new URL(request.url);
