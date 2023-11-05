@@ -1,20 +1,4 @@
-addEventListener("fetch", (event) => {
-  event.respondWith(handle(event.request));
-});
-
-// use secrets
-const client_id = CLIENT_ID;
-const client_secret = CLIENT_SECRET;
-
-async function handle(request) {
-  // redirect GET requests to the OAuth login page on github.com
-  if (request.method === "GET") {
-    return Response.redirect(
-      `https://github.com/login/oauth/authorize?client_id=${client_id}&scope=repo`,
-      302
-    );
-  }
-
+export async function onRequestPost({request, env}) {
   try {
     const { code } = await request.json();
 
@@ -27,7 +11,7 @@ async function handle(request) {
           "user-agent": "github-lite",
           accept: "application/json",
         },
-        body: JSON.stringify({ client_id, client_secret, code }),
+        body: JSON.stringify({ client_id: env.CLIENT_ID, client_secret: env.CLIENT_SECRET, code }),
       }
     );
     const result = await response.json();
