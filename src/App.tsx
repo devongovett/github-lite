@@ -9,7 +9,13 @@ import useSWR from 'swr';
 type Notification = RestEndpointMethodTypes["activity"]["listNotificationsForAuthenticatedUser"]["response"]["data"][0];
 
 async function fetchNotifications() {
-  let res = await github.activity.listNotificationsForAuthenticatedUser({page: 1, all: true});
+  let res = await github.activity.listNotificationsForAuthenticatedUser({
+    page: 1,
+    all: true,
+    headers: {
+      'If-None-Match': ''
+    }
+  });
 
   for (let item of res.data.slice(0, 10)) {
     preloadNotification(item);
