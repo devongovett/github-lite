@@ -40,7 +40,9 @@ export async function onRequestGet({request}) {
   let url = new URL(request.url);
   let redirect = url.searchParams.get('redirect');
   if (redirect.startsWith('http://localhost')) {
-    return new Response.redirect(redirect);
+    let redirectUrl = new URL(redirect);
+    redirectUrl.searchParams.set('code', url.searchParams.get('code'));
+    return Response.redirect(redirectUrl);
   }
 
   return new Response('Redirect not allowed', {status: 400});
