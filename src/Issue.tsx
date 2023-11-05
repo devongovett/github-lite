@@ -4,11 +4,12 @@ import Markdown from 'markdown-to-jsx';
 import { DOMAttributes, FormEvent, ReactNode, cloneElement, useContext, useState } from 'react';
 import { useDateFormatter } from 'react-aria';
 import { Button, Dialog, DialogTrigger, Label, Link, Popover, TextArea, TextField, ToggleButton } from 'react-aria-components';
-import { PullRequestContext } from './PullRequest';
+import { PullRequestContext, PullRequestPage } from './PullRequest';
 import { github, graphql, useQuery } from './client';
+import { mutate } from 'swr';
 
-export function Issue({owner, repo, number}: {owner: string, repo: string, number: number}) {
-  let { data: res } = useQuery<{repository: Repository}>(Issue.query(), {owner, repo, number});
+export function IssuePage({owner, repo, number}: {owner: string, repo: string, number: number}) {
+  let { data: res } = useQuery<{repository: Repository}>(IssuePage.query(), {owner, repo, number});
   let data = res?.repository.issue;
   if (!data) {
     return null;
@@ -17,17 +18,18 @@ export function Issue({owner, repo, number}: {owner: string, repo: string, numbe
   return (
     <div className="flex flex-col gap-4 my-4 max-w-3xl mx-auto">
       <Header data={data} />
-      <IssueCard data={data} />
+      <CommentCard data={data} />
       <Timeline items={data.timelineItems.nodes!} />
       <Comment issue={data} />
     </div>
   );
 }
 
-Issue.query = () => `
+IssuePage.query = () => `
 query IssueTimeline($owner: String!, $repo: String!, $number: Int!) {
   repository(owner:$owner, name:$repo) {
     issue(number:$number) {
+      __typename
       id
       number
       url
@@ -182,7 +184,7 @@ export function Timeline({items}: {items: (IssueTimelineItems | PullRequestTimel
     {items.map((item, i) => {
       switch (item?.__typename) {
         case 'IssueComment':
-          return <IssueCard key={item.id} data={item} />;
+          return <CommentCard key={item.id} data={item} />;
         case 'AutomaticBaseChangeSucceededEvent':
           return <BaseChanged key={item.id} data={item} />;
         case 'PullRequestCommit':
@@ -222,7 +224,7 @@ fragment IssueTimelineFragment on PullRequestTimelineItems {
   ...ReopenedEventFragment
 }
 
-${IssueCard.fragment}
+${CommentCard.fragment}
 ${Renamed.fragment}
 ${Labeled.fragment}
 ${Closed.fragment}
@@ -254,7 +256,7 @@ ${BranchDeleted.fragment}
 ${PullRequestThread.fragment}
 `;
 
-export function IssueCard({data}: {data: Issue | PullRequest | IssueComment | PullRequestReviewComment}) {
+export function CommentCard({data}: {data: Issue | PullRequest | IssueComment | PullRequestReviewComment}) {
   let df = useDateFormatter({
     year: 'numeric',
     month: 'numeric',
@@ -291,7 +293,7 @@ export function IssueCard({data}: {data: Issue | PullRequest | IssueComment | Pu
   );
 }
 
-IssueCard.fragment = `
+CommentCard.fragment = `
 fragment IssueCommentFragment on IssueComment {
   id
   body
@@ -876,6 +878,15 @@ export function Comment({issue}: {issue: Issue | PullRequest}) {
       issue_number: issue.number,
       body: comment
     });
+
+    mutate([
+      issue.__typename === 'Issue' ? IssuePage.query() : PullRequestPage.query(),
+      {
+        owner: issue.repository.owner.login,
+        repo: issue.repository.name,
+        number: issue.number
+      }
+    ]);
   };
 
   return (

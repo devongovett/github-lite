@@ -1,13 +1,13 @@
-import { CheckRun, PullRequest, PullRequestReviewDecision, Repository } from '@octokit/graphql-schema';
+import { PullRequest, PullRequestReviewDecision, Repository } from '@octokit/graphql-schema';
 import { createContext } from 'react';
 import { Button, Link } from 'react-aria-components';
-import { Card, Comment, Header, IssueCard, Status, Timeline, User } from './Issue';
+import { Card, Comment, Header, CommentCard, Status, Timeline, User } from './Issue';
 import { useQuery } from './client';
 
 export const PullRequestContext = createContext<PullRequest | null>(null);
 
-export function PullRequest({owner, repo, number}: {owner: string, repo: string, number: number}) {
-  let { data: res } = useQuery<{repository: Repository}>(PullRequest.query(), {owner, repo, number});
+export function PullRequestPage({owner, repo, number}: {owner: string, repo: string, number: number}) {
+  let { data: res } = useQuery<{repository: Repository}>(PullRequestPage.query(), {owner, repo, number});
   let data = res?.repository.pullRequest;
   if (!data) {
     return null;
@@ -17,7 +17,7 @@ export function PullRequest({owner, repo, number}: {owner: string, repo: string,
     <div className="flex flex-col gap-4 my-4 max-w-3xl mx-auto">
       <PullRequestContext.Provider value={data}>
         <Header data={data} />
-        <IssueCard data={data} />
+        <CommentCard data={data} />
         <PullHeader data={data} />
         <Timeline items={data.timelineItems.nodes!} />
         <Comment issue={data} />
@@ -26,10 +26,11 @@ export function PullRequest({owner, repo, number}: {owner: string, repo: string,
   );
 }
 
-PullRequest.query = () => `
+PullRequestPage.query = () => `
 query issueTimeline($owner: String!, $repo: String!, $number: Int!) {
   repository(owner:$owner, name:$repo) {
     pullRequest(number:$number) {
+      __typename
       id
       number
       url

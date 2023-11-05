@@ -1,7 +1,7 @@
 import {RestEndpointMethodTypes} from '@octokit/rest';
 import {github, preload} from './client';
-import { PullRequest } from './PullRequest';
-import { Issue } from './Issue';
+import { PullRequestPage } from './PullRequest';
+import { IssuePage } from './Issue';
 import { ListBox, Item, Text, RouterProvider } from 'react-aria-components';
 import { Route, Routes, useLocation, useNavigate } from 'react-router-dom';
 import useSWR from 'swr';
@@ -88,10 +88,10 @@ function NotificationItem({item}: {item: Notification}) {
 function preloadNotification(item: Notification) {
   switch (item?.subject.type) {
     case 'PullRequest':
-      preload(PullRequest.query(), {owner: item.repository.owner.login, repo: item.repository.name, number: Number(item.subject.url.split('/').pop())});
+      preload(PullRequestPage.query(), {owner: item.repository.owner.login, repo: item.repository.name, number: Number(item.subject.url.split('/').pop())});
       break;
     case 'Issue':
-      preload(Issue.query(), {owner: item.repository.owner.login, repo: item.repository.name, number: Number(item.subject.url.split('/').pop())});
+      preload(IssuePage.query(), {owner: item.repository.owner.login, repo: item.repository.name, number: Number(item.subject.url.split('/').pop())});
       break;
   }
 }
@@ -100,10 +100,10 @@ function Notification({selectedItem}: {selectedItem: Notification | undefined}) 
   let content;
   switch (selectedItem?.subject.type) {
     case 'PullRequest':
-      content = <PullRequest key={selectedItem.id} owner={selectedItem.repository.owner.login} repo={ selectedItem.repository.name} number={Number(selectedItem.subject.url.split('/').pop())} />;
+      content = <PullRequestPage key={selectedItem.id} owner={selectedItem.repository.owner.login} repo={ selectedItem.repository.name} number={Number(selectedItem.subject.url.split('/').pop())} />;
       break;
     case 'Issue':
-      content = <Issue key={selectedItem.id} owner={selectedItem.repository.owner.login} repo={ selectedItem.repository.name} number={Number(selectedItem.subject.url.split('/').pop())} />;
+      content = <IssuePage key={selectedItem.id} owner={selectedItem.repository.owner.login} repo={ selectedItem.repository.name} number={Number(selectedItem.subject.url.split('/').pop())} />;
       break;
     default:
       content = (
