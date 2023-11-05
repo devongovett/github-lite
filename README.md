@@ -4,7 +4,7 @@
 
 A faster GitHub client built with React Aria Components + Tailwind CSS. [Try it here](https://github-lite.pages.dev/)
 
-<img width="1469" alt="Screenshot of app" src="https://github.com/devongovett/github-lite/assets/19409/af9b61ef-d8a7-44f7-aac3-b8fa6079ce92">
+<img width="1469" alt="Screenshot of app" src="https://github.com/devongovett/github-lite/assets/19409/546d074b-992b-41ae-98bd-212d53abfdbd">
 
 ## Why?
 
