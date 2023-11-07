@@ -4,7 +4,8 @@ import { PullRequestPage } from './PullRequest';
 import { IssuePage } from './Issue';
 import { ListBox, Item, Text, RouterProvider } from 'react-aria-components';
 import { Route, Routes, useLocation, useNavigate } from 'react-router-dom';
-import useSWR from 'swr';
+import useSWR, {mutate} from 'swr';
+import { useEffect } from 'react';
 
 type Notification = RestEndpointMethodTypes["activity"]["listNotificationsForAuthenticatedUser"]["response"]["data"][0];
 
@@ -120,9 +121,28 @@ function Notification({selectedItem}: {selectedItem: Notification | undefined}) 
       break;
   }
 
+  useEffect(() => {
+    if (selectedItem?.unread) {
+      markAsRead(selectedItem.id);
+    }
+  }, [selectedItem]);
+
   return (
     <div className="flex-1 overflow-auto" key={selectedItem?.id}>
       {content}
     </div>
   );
+}
+
+function markAsRead(id: string) {
+  mutate('notifications', async (notifications?: Notification[]) => {
+    await github.activity.markThreadAsRead({thread_id: Number(id)});
+    if (notifications) {
+      let index = notifications.findIndex(n => n.id === id);
+      let result = [...notifications];
+      result[index] = {...result[index], unread: false};
+      return result;
+    }
+    return notifications;
+  });
 }
