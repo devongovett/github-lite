@@ -28,7 +28,7 @@ export function IssueStatus({data}: {data: PullRequest | Issue}) {
   if ('isDraft' in data && data.isDraft) {
     state = 'DRAFT';
   }
-  return <span className={`capitalize w-fit px-2 rounded border text-sm font-medium ${states[state]}`}>{state.toLowerCase()}</span>
+  return <span className={`capitalize w-fit px-2 py-0.5 rounded border text-sm font-medium ${states[state]}`}>{state.toLowerCase()}</span>
 }
 
 let checkStates = {
@@ -102,15 +102,21 @@ export function Icon({className, children}: {className: string, children: ReactN
 }
 
 export function GithubLabel({color, children}: {color: string, children: ReactNode}) {
-  return <span className="px-3 py-0.5 text-white rounded-full text-xs font-semibold" style={{background: '#' + color}}>{children}</span>;
+  return (
+    <span
+      className="px-3 py-0.5 text-black rounded-full text-xs font-semibold border"
+      style={{background: `#${color}66`, borderColor: `#${color}66`, color: `color-mix(in srgb, #${color}, black 70%)`}}>
+      {children}
+    </span>
+  );
 }
 
 export function User({actor}: {actor: Actor}) {
   return (
-    <>
+    <span className="inline-flex items-center align-bottom">
       <Avatar src={actor.avatarUrl} className="inline mr-2" />
       <Link href={actor.url} target="_blank" className="font-semibold hover:underline">{actor.login}</Link>
-    </>
+    </span>
   )
 }
 

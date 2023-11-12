@@ -1,4 +1,4 @@
-import { AutomaticBaseChangeSucceededEvent, ClosedEvent, CommentDeletedEvent, Commit, ConvertToDraftEvent, CrossReferencedEvent, HeadRefDeletedEvent, HeadRefForcePushedEvent, IssueTimelineItems, LabeledEvent, MergedEvent, PullRequestCommit, PullRequestReview, PullRequestReviewThread, PullRequestTimelineItems, ReadyForReviewEvent, RenamedTitleEvent, ReopenedEvent, ReviewDismissedEvent, ReviewRequestedEvent } from '@octokit/graphql-schema';
+import { AutomaticBaseChangeSucceededEvent, ClosedEvent, CommentDeletedEvent, Commit, ConvertToDraftEvent, CrossReferencedEvent, HeadRefDeletedEvent, HeadRefForcePushedEvent, IssueTimelineItems, LabeledEvent, MergedEvent, PullRequestCommit, PullRequestReview, PullRequestReviewThread, PullRequestTimelineItems, ReadyForReviewEvent, ReferencedEvent, RenamedTitleEvent, ReopenedEvent, ReviewDismissedEvent, ReviewRequestedEvent, UnlabeledEvent } from '@octokit/graphql-schema';
 import { CheckCircleIcon, CommitIcon, CrossReferenceIcon, EyeIcon, GitBranchIcon, GitMergeIcon, GitPullRequestClosedIcon, GitPullRequestDraftIcon, IssueClosedIcon, IssueReopenedIcon, PencilIcon, RepoPushIcon, TagIcon, XIcon } from '@primer/octicons-react';
 import { useContext } from 'react';
 import { useDateFormatter } from 'react-aria';
@@ -28,6 +28,8 @@ export function Timeline({items}: {items: (IssueTimelineItems | PullRequestTimel
           return <Renamed key={item.id} data={item} />;
         case 'LabeledEvent':
           return <Labeled key={item.id} data={item} />;
+        case 'UnlabeledEvent':
+          return <Unlabeled key={item.id} data={item} />;
         case 'ClosedEvent':
           return <Closed key={item.id} data={item} />;
         case 'ReopenedEvent':
@@ -38,6 +40,8 @@ export function Timeline({items}: {items: (IssueTimelineItems | PullRequestTimel
           return <BranchDeleted key={item.id} data={item} />;
         case 'CrossReferencedEvent':
           return <CrossReferenced key={item.id} data={item} />;
+        case 'ReferencedEvent':
+          return <Referenced key={item.id} data={item} />;
         case 'ReviewRequestedEvent':
           return <ReviewRequested key={item.id} data={item} />;
         case 'ConvertToDraftEvent':
@@ -62,20 +66,24 @@ fragment IssueTimelineFragment on PullRequestTimelineItems {
   ...IssueCommentFragment
   ...RenamedTitleFragment
   ...LabeledEventFragment
+  ...UnlabeledEventFragment
   ...ClosedEventFragment
   ...ReopenedEventFragment
   ...CrossReferencedEventFragment
+  ...ReferencedEventFragment
   ...CommentDeletedEventFragment
 }
 
 ${CommentCard.fragment}
 ${Renamed.fragment}
 ${Labeled.fragment}
+${Unlabeled.fragment}
 ${Closed.fragment}
 ${Reopened.fragment}
 ${User.fragment}
 ${Reactions.fragment}
 ${CrossReferenced.fragment}
+${Referenced.fragment}
 ${CommentDeleted.fragment}
 `;
 
@@ -119,6 +127,28 @@ function Labeled({data}: {data: LabeledEvent}) {
 
 Labeled.fragment = `
 fragment LabeledEventFragment on LabeledEvent {
+  id
+  actor {
+    ...ActorFragment
+  }
+  label {
+    name
+    color
+  }
+}
+`;
+
+function Unlabeled({data}: {data: UnlabeledEvent}) {
+  return (
+    <div className="flex items-center gap-2">
+      <Icon className="bg-daw-gray-300 text-daw-gray-800"><TagIcon /></Icon>
+      <span><User actor={data.actor!} /> removed the <GithubLabel color={data.label.color}>{data.label.name}</GithubLabel> label</span>
+    </div>
+  );
+}
+
+Unlabeled.fragment = `
+fragment UnlabeledEventFragment on UnlabeledEvent {
   id
   actor {
     ...ActorFragment
@@ -426,11 +456,20 @@ function CrossReferenced({data}: {data: CrossReferencedEvent}) {
         gridTemplateColumns: 'min-content 1fr'
       }}>
       <Icon className="bg-daw-gray-300 text-daw-gray-800"><CrossReferenceIcon /></Icon>
-      <span><User actor={data.actor!} /> referenced this{data.isCrossRepository && `from ${data.target.repository.name}`}</span>
+      <span><User actor={data.actor!} /> referenced this</span>
       <Card gridArea="issue">
-        <div className="flex gap-1">
-          <Link href={data.target.url} target="_blank" className="flex-1 truncate hover:underline">{data.target.title}</Link>
-          <IssueStatus data={data.target} />
+        <div className="flex gap-1 items-center">
+          <div className="flex flex-col gap-1 flex-1">
+            <Link href={data.source.url} target="_blank" className="truncate font-semibold outline-none hover:underline focus-visible:underline">{data.source.title}</Link>
+            {data.isCrossRepository &&
+              <div className="flex gap-1 items-center">
+                <Avatar src={data.source.repository.owner.avatarUrl} />
+                <Link target="_blank" href={data.source.url} className="text-daw-gray-700 outline-none hover:underline focus-visible:underline">{data.source.repository.owner.login}/{data.source.repository.name} #{data.source.number}</Link>
+              </div>
+            }
+            {!data.isCrossRepository && <Link target="_blank" href={data.source.url} className="text-daw-gray-700 outline-none hover:underline focus-visible:underline">#{data.source.number}</Link>}
+          </div>
+          <IssueStatus data={data.source} />
         </div>
       </Card>
     </div>
@@ -444,14 +483,20 @@ fragment CrossReferencedEventFragment on CrossReferencedEvent {
     ...ActorFragment
   }
   isCrossRepository
-  target {
+  source {
     __typename
     ...on Issue {
       title
       number
       url
+      number
       repository {
         name
+        url
+        owner {
+          login
+          avatarUrl
+        }
       }
       state
     }
@@ -459,9 +504,62 @@ fragment CrossReferencedEventFragment on CrossReferencedEvent {
       title
       number
       url
+      number
       repository {
         name
+        url
+        owner {
+          login
+          avatarUrl
+        }
       }
+      state
+    }
+  }
+}
+`;
+
+function Referenced({data}: {data: ReferencedEvent}) {
+  return (
+    <div
+      className="grid items-center gap-2"
+      style={{
+        gridTemplateAreas: `
+          "icon description"
+          ".    commit"
+        `,
+        gridTemplateColumns: 'min-content 1fr'
+      }}>
+      <Icon className="bg-daw-gray-300 text-daw-gray-800"><CrossReferenceIcon /></Icon>
+      <span><User actor={data.actor!} /> referenced this pull request</span>
+      <div style={{gridArea: 'commit'}} className="flex gap-2">
+        <span className="flex-1 line-clamp-2 text-sm"><Link href={data.commit!.commitUrl} target="_blank" className="hover:underline">{data.commit!.message}</Link></span>
+        {data.commit!.statusCheckRollup && <Status state={data.commit!.statusCheckRollup.state} />}
+        <CommitLink commit={data.commit!} />
+      </div>
+    </div>
+  );
+}
+
+Referenced.fragment = `
+fragment ReferencedEventFragment on ReferencedEvent {
+  id
+  actor {
+    ...ActorFragment
+  }
+  isCrossRepository
+  commit {
+    url
+    abbreviatedOid
+    message
+    commitUrl
+    author {
+      user {
+        login
+      }
+      avatarUrl
+    }
+    statusCheckRollup {
       state
     }
   }
