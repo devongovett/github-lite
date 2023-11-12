@@ -1,8 +1,12 @@
 import { PullRequest, PullRequestReviewDecision, Repository } from '@octokit/graphql-schema';
-import { createContext } from 'react';
+import { Fragment, createContext } from 'react';
 import { Button, Link } from 'react-aria-components';
-import { Card, Comment, Header, CommentCard, Status, Timeline, User } from './Issue';
+import { Header } from './Issue';
 import { useQuery } from './client';
+import { CommentCard } from './CommentCard';
+import { Timeline } from './Timeline';
+import { IssueCommentForm } from './CommentForm';
+import { Card, Status, User } from './components';
 
 export const PullRequestContext = createContext<PullRequest | null>(null);
 
@@ -20,7 +24,7 @@ export function PullRequestPage({owner, repo, number}: {owner: string, repo: str
         <CommentCard data={data} />
         <PullHeader data={data} />
         <Timeline items={data.timelineItems.nodes!} />
-        <Comment issue={data} />
+        <IssueCommentForm issue={data} />
       </PullRequestContext.Provider>
     </div>
   );
@@ -80,6 +84,7 @@ query issueTimeline($owner: String!, $repo: String!, $number: Int!) {
             }
             checkSuites(first:100) {
               nodes {
+                id
                 app {
                   name
                   logoUrl
@@ -89,6 +94,7 @@ query issueTimeline($owner: String!, $repo: String!, $number: Int!) {
                 conclusion
                 checkRuns(first:100) {
                   nodes {
+                    id
                     name
                     detailsUrl
                     status
@@ -115,7 +121,7 @@ query issueTimeline($owner: String!, $repo: String!, $number: Int!) {
         nodes {
           ...PullRequestThreadFragment
         }
-      }          
+      }
     }
   }
 }
@@ -189,7 +195,7 @@ function Checks({data}: {data: PullRequest}) {
         <h3 className="font-semibold">Checks</h3>
       </div>
       <ul className="flex flex-col gap-2">
-        {checks?.map((check, i) => {
+        {checks?.map(check => {
           if (!check?.conclusion) {
             return null;
           }
@@ -207,7 +213,7 @@ function Checks({data}: {data: PullRequest}) {
 
           if (check?.checkRuns?.nodes?.length === 0) {
             return (
-              <li key={i} >
+              <li key={check.id}>
                 {summary}
               </li>
             );
@@ -215,14 +221,14 @@ function Checks({data}: {data: PullRequest}) {
 
           if ((check?.checkRuns?.nodes?.length as number) > 1) {
             return (
-              <li key={i} className="flex flex-col gap-2">
+              <li key={check.id} className="flex flex-col gap-2">
                 <details>
                   <summary className="flex items-center">
                     {summary}
                   </summary>
                   <ul className="flex flex-col gap-2 ml-4 mt-2">
-                    {check?.checkRuns?.nodes?.map((node, i) => (
-                      <li key={i} className="flex gap-2 items-center">
+                    {check?.checkRuns?.nodes?.map((node) => (
+                      <li key={node!.id} className="flex gap-2 items-center">
                         <div className="w-5 flex justify-center"><Status state={node!.conclusion!} /></div>
                         <div className="flex flex-col">
                           <Link target="_blank" href={node!.detailsUrl}>{node!.name}</Link>
@@ -237,9 +243,9 @@ function Checks({data}: {data: PullRequest}) {
           }
 
           return (
-            <>
-              {check?.checkRuns?.nodes?.map((node, i) => (
-                <li key={i} className="flex gap-2 items-center">
+            <Fragment key={check.id}>
+              {check?.checkRuns?.nodes?.map(node => (
+                <li key={node!.id} className="flex gap-2 items-center">
                   <div className="w-5 flex justify-center"><Status state={node!.conclusion!} /></div>
                   <img src={check!.app?.logoUrl} className="w-8 h-8 rounded" style={{backgroundColor: '#' + check!.app?.logoBackgroundColor}} alt="" />
                   <div className="flex flex-col">
@@ -248,7 +254,7 @@ function Checks({data}: {data: PullRequest}) {
                   </div>
                 </li>
               ))}
-            </>
+            </Fragment>
           );
         })}
       </ul>

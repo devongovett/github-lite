@@ -11,6 +11,7 @@ export const github = new Octokit({
 export const graphql = githubGraphql.defaults({
   headers: {
     authorization: `token ${localStorage.token}`,
+    'If-None-Match': ''
   },
 });
 
