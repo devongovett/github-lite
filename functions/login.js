@@ -45,14 +45,25 @@ export async function onRequestOptions() {
   });
 }
 
+function parseUrlOrNull(url) {
+  try {
+    return new URL(url);
+  } catch (error) {
+    return null;
+  }
+}
+
 export async function onRequestGet({request}) {
   // Used during local development to redirect back to localhost.
   let url = new URL(request.url);
   let redirect = url.searchParams.get('redirect');
-  if (redirect.startsWith('http://localhost')) {
-    let redirectUrl = new URL(redirect);
-    redirectUrl.searchParams.set('code', url.searchParams.get('code'));
-    return Response.redirect(redirectUrl);
+  if (redirect) {
+    let redirectUrl = parseUrlOrNull(redirect);
+
+    if (redirectUrl && redirectUrl.hostname === 'localhost') {
+      redirectUrl.searchParams.set('code', url.searchParams.get('code'));
+      return Response.redirect(redirectUrl);
+    }
   }
 
   return new Response('Redirect not allowed', {status: 400});
