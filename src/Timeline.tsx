@@ -1,5 +1,5 @@
 import { AutomaticBaseChangeSucceededEvent, ClosedEvent, CommentDeletedEvent, Commit, ConvertToDraftEvent, CrossReferencedEvent, HeadRefDeletedEvent, HeadRefForcePushedEvent, IssueTimelineItems, LabeledEvent, MergedEvent, PullRequestCommit, PullRequestReview, PullRequestReviewThread, PullRequestTimelineItems, ReadyForReviewEvent, ReferencedEvent, RenamedTitleEvent, ReopenedEvent, ReviewDismissedEvent, ReviewRequestedEvent, UnlabeledEvent } from '@octokit/graphql-schema';
-import { CheckCircleIcon, CommitIcon, CrossReferenceIcon, EyeIcon, GitBranchIcon, GitMergeIcon, GitPullRequestClosedIcon, GitPullRequestDraftIcon, IssueClosedIcon, IssueReopenedIcon, PencilIcon, RepoPushIcon, TagIcon, XIcon } from '@primer/octicons-react';
+import { CheckCircleIcon, CommitIcon, CrossReferenceIcon, EyeIcon, GitBranchIcon, GitMergeIcon, GitPullRequestClosedIcon, GitPullRequestDraftIcon, IssueClosedIcon, IssueReopenedIcon, PencilIcon, RepoPushIcon, SkipIcon, TagIcon, XIcon } from '@primer/octicons-react';
 import { useContext } from 'react';
 import { useDateFormatter } from 'react-aria';
 import { Button, Link } from 'react-aria-components';
@@ -163,7 +163,11 @@ fragment UnlabeledEventFragment on UnlabeledEvent {
 function Closed({data}: {data: ClosedEvent}) {
   return (
     <div className="flex items-center gap-2">
-      <Icon className="bg-purple-600 text-white"><IssueClosedIcon /></Icon>
+      {data.stateReason === "NOT_PLANNED" ? (
+        <Icon className="bg-daw-gray-300 text-daw-gray-800"><SkipIcon /></Icon>
+      ) : (
+        <Icon className="bg-purple-600 text-white"><IssueClosedIcon /></Icon>
+      )}
       <span><User actor={data.actor!} /> closed this as {data.stateReason?.toLowerCase()}</span>
     </div>
   );
