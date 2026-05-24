@@ -1,32 +1,68 @@
 import { PullRequest, PullRequestReviewDecision, Repository } from '@octokit/graphql-schema';
 import { Fragment, createContext } from 'react';
-import { Button, Link } from 'react-aria-components';
+import { Button, Link, Tab, TabList, TabPanel, Tabs } from 'react-aria-components';
+import { CodeView } from '@pierre/diffs/react';
+import { parsePatchFiles, type CodeViewDiffItem } from '@pierre/diffs';
 import { Header } from './Issue';
-import { useQuery } from './client';
+import { useQuery, github } from './client';
 import { CommentCard } from './CommentCard';
 import { Timeline } from './Timeline';
 import { IssueCommentForm } from './CommentForm';
 import { Card, Status, User } from './components';
+import useSWR from 'swr';
+
+async function fetchPatch([, owner, repo, number]: ['patch', string, string, number]): Promise<string> {
+  let res = await github.request('GET /repos/{owner}/{repo}/pulls/{pull_number}', {
+    owner,
+    repo,
+    pull_number: number,
+    headers: { accept: 'application/vnd.github.patch' }
+  });
+  return res.data as unknown as string;
+}
+
+function usePatch(owner: string, repo: string, number: number) {
+  return useSWR(['patch', owner, repo, number] as const, fetchPatch);
+}
 
 export const PullRequestContext = createContext<PullRequest | null>(null);
 
 export function PullRequestPage({owner, repo, number}: {owner: string, repo: string, number: number}) {
   let { data: res } = useQuery<{repository: Repository}>(PullRequestPage.query(), {owner, repo, number});
   let data = res?.repository.pullRequest;
+  let { data: patch } = usePatch(owner, repo, number);
   if (!data) {
     return null;
   }
 
   return (
-    <div className="flex flex-col gap-4 my-4 max-w-3xl mx-auto">
-      <PullRequestContext.Provider value={data}>
+    <PullRequestContext.Provider value={data}>
+      <div className="flex flex-col gap-4 my-4 w-full max-w-3xl mx-auto">
         <Header data={data} />
-        <CommentCard data={data} />
-        <PullHeader data={data} />
-        <Timeline items={data.timelineItems.nodes!} />
-        <IssueCommentForm issue={data} />
-      </PullRequestContext.Provider>
-    </div>
+      </div>
+      <Tabs className="flex flex-col gap-4 my-4 flex-1 min-h-0">
+        <TabList aria-label="Pull request tabs" className="flex gap-1 border-b border-daw-gray-200 max-w-3xl mx-auto w-full">
+          <Tab id="overview" className="px-4 py-2 text-sm font-medium cursor-default outline-none rounded-t-md selected:border-b-2 selected:border-blue-600 selected:text-blue-600 hover:bg-daw-gray-100 focus-visible:ring-2 ring-blue-600">
+            Overview
+          </Tab>
+          <Tab id="files" className="px-4 py-2 text-sm font-medium cursor-default outline-none rounded-t-md selected:border-b-2 selected:border-blue-600 selected:text-blue-600 hover:bg-daw-gray-100 focus-visible:ring-2 ring-blue-600">
+            Files
+          </Tab>
+        </TabList>
+        <TabPanel id="overview" className="flex flex-col gap-4 max-w-3xl mx-auto w-full">
+          <CommentCard data={data} />
+          <PullHeader data={data} />
+          <Timeline items={data.timelineItems.nodes!} />
+          <IssueCommentForm issue={data} />
+        </TabPanel>
+        <TabPanel id="files" className="flex-1 min-h-0">
+          {patch
+            ? <DiffCodeView patch={patch} />
+            : <div className="text-sm text-daw-gray-500 py-4 max-w-3xl mx-auto w-full">Loading diff…</div>
+          }
+        </TabPanel>
+      </Tabs>
+    </PullRequestContext.Provider>
   );
 }
 
@@ -128,6 +164,24 @@ query issueTimeline($owner: String!, $repo: String!, $number: Int!) {
 
 ${Timeline.pullRequestFragment()}
 `;
+
+function DiffCodeView({patch}: {patch: string}) {
+  let items: CodeViewDiffItem[] = parsePatchFiles(patch).flatMap((parsed, pi) =>
+    parsed.files.map((file, fi) => ({ id: `${pi}:${fi}:${file.name}`, type: 'diff' as const, fileDiff: file }))
+  );
+  return (
+    <CodeView
+      items={items}
+      options={{
+        theme: { dark: 'pierre-dark', light: 'pierre-light' },
+        themeType: 'system',
+        stickyHeaders: true,
+        diffStyle: 'unified'
+      }}
+      className="h-full overflow-auto"
+    />
+  );
+}
 
 function PullHeader({data}: {data: PullRequest}) {
   return (

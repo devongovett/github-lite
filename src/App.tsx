@@ -128,7 +128,7 @@ function Notification({selectedItem}: {selectedItem: Notification | undefined}) 
   }, [selectedItem]);
 
   return (
-    <div className="flex-1 overflow-auto" key={selectedItem?.id}>
+    <div className="flex-1 overflow-auto flex flex-col" key={selectedItem?.id}>
       {content}
     </div>
   );
