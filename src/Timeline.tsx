@@ -329,7 +329,7 @@ fragment ReviewedEventFragment on PullRequestReview {
 }
 `;
 
-function PullRequestThread({data}: {data: PullRequestReviewThread}) {
+export function PullRequestThread({data}: {data: PullRequestReviewThread}) {
   let df = useDateFormatter({
     year: 'numeric',
     month: 'numeric',
@@ -379,6 +379,7 @@ fragment PullRequestThreadFragment on PullRequestReviewThread {
     ...ActorFragment
   }
   line
+  diffSide
   path
   viewerCanResolve
   comments(first:100) {

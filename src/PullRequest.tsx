@@ -2,7 +2,9 @@ import { PullRequest, PullRequestReviewDecision, Repository } from '@octokit/gra
 import { Fragment, createContext } from 'react';
 import { Button, Link, Tab, TabList, TabPanel, Tabs } from 'react-aria-components';
 import { CodeView } from '@pierre/diffs/react';
-import { parsePatchFiles, type CodeViewDiffItem } from '@pierre/diffs';
+import { parsePatchFiles, type CodeViewDiffItem, type DiffLineAnnotation } from '@pierre/diffs';
+import { PullRequestThread } from './Timeline';
+import type { PullRequestReviewThread } from '@octokit/graphql-schema';
 import { Header } from './Issue';
 import { useQuery, github } from './client';
 import { CommentCard } from './CommentCard';
@@ -16,7 +18,7 @@ async function fetchPatch([, owner, repo, number]: ['patch', string, string, num
     owner,
     repo,
     pull_number: number,
-    headers: { accept: 'application/vnd.github.patch' }
+    headers: { accept: 'application/vnd.github.diff' }
   });
   return res.data as unknown as string;
 }
@@ -40,8 +42,8 @@ export function PullRequestPage({owner, repo, number}: {owner: string, repo: str
       <div className="flex flex-col gap-4 my-4 w-full max-w-3xl mx-auto">
         <Header data={data} />
       </div>
-      <Tabs className="flex flex-col gap-4 my-4 flex-1 min-h-0">
-        <TabList aria-label="Pull request tabs" className="flex gap-1 border-b border-daw-gray-200 max-w-3xl mx-auto w-full">
+      <Tabs className="flex flex-col my-4 flex-1 min-h-0">
+        <TabList aria-label="Pull request tabs" className="flex gap-1 max-w-3xl mx-auto w-full">
           <Tab id="overview" className="px-4 py-2 text-sm font-medium cursor-default outline-none rounded-t-md selected:border-b-2 selected:border-blue-600 selected:text-blue-600 hover:bg-daw-gray-100 focus-visible:ring-2 ring-blue-600">
             Overview
           </Tab>
@@ -49,6 +51,7 @@ export function PullRequestPage({owner, repo, number}: {owner: string, repo: str
             Files
           </Tab>
         </TabList>
+        <div className="border-b border-daw-gray-200 mb-4 mx-2" />
         <TabPanel id="overview" className="flex flex-col gap-4 max-w-3xl mx-auto w-full">
           <CommentCard data={data} />
           <PullHeader data={data} />
@@ -57,7 +60,7 @@ export function PullRequestPage({owner, repo, number}: {owner: string, repo: str
         </TabPanel>
         <TabPanel id="files" className="flex-1 min-h-0">
           {patch
-            ? <DiffCodeView patch={patch} />
+            ? <DiffCodeView patch={patch} threads={(data.reviewThreads.nodes ?? []) as Thread[]} />
             : <div className="text-sm text-daw-gray-500 py-4 max-w-3xl mx-auto w-full">Loading diff…</div>
           }
         </TabPanel>
@@ -165,10 +168,30 @@ query issueTimeline($owner: String!, $repo: String!, $number: Int!) {
 ${Timeline.pullRequestFragment()}
 `;
 
-function DiffCodeView({patch}: {patch: string}) {
-  let items: CodeViewDiffItem[] = parsePatchFiles(patch).flatMap((parsed, pi) =>
-    parsed.files.map((file, fi) => ({ id: `${pi}:${fi}:${file.name}`, type: 'diff' as const, fileDiff: file }))
+type Thread = PullRequestReviewThread;
+type ThreadAnnotation = DiffLineAnnotation<Thread>;
+
+function DiffCodeView({patch, threads}: {patch: string, threads: Thread[]}) {
+  let threadsByPath = new Map<string, Thread[]>();
+  for (let thread of threads) {
+    if (!thread.path || thread.line == null) continue;
+    let list = threadsByPath.get(thread.path);
+    if (!list) threadsByPath.set(thread.path, list = []);
+    list.push(thread);
+  }
+
+  let items: CodeViewDiffItem<Thread>[] = parsePatchFiles(patch).flatMap((parsed, pi) =>
+    parsed.files.map((file, fi) => {
+      let fileThreads = threadsByPath.get(file.name) ?? [];
+      let annotations: ThreadAnnotation[] = fileThreads.map(thread => ({
+        side: thread.diffSide === 'LEFT' ? 'deletions' : 'additions',
+        lineNumber: thread.line!,
+        metadata: thread,
+      }));
+      return { id: `${pi}:${fi}:${file.name}`, type: 'diff' as const, fileDiff: file, annotations };
+    })
   );
+
   return (
     <CodeView
       items={items}
@@ -176,9 +199,11 @@ function DiffCodeView({patch}: {patch: string}) {
         theme: { dark: 'pierre-dark', light: 'pierre-light' },
         themeType: 'system',
         stickyHeaders: true,
-        diffStyle: 'unified'
+        diffStyle: 'unified',
+        enableGutterUtility: true
       }}
       className="h-full overflow-auto"
+      renderAnnotation={annotation => <div className="font-sans text-base mx-2"><PullRequestThread data={(annotation as ThreadAnnotation).metadata} /></div>}
     />
   );
 }
