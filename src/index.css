@@ -3,16 +3,16 @@
 
 /* Dark-aware color variables: shades invert automatically in dark mode (50↔950, 100↔900, etc.) */
 :root {
-  --daw-gray-50: var(--color-gray-50);
-  --daw-gray-100: var(--color-gray-100);
-  --daw-gray-200: var(--color-gray-200);
-  --daw-gray-300: var(--color-gray-300);
-  --daw-gray-400: var(--color-gray-400);
-  --daw-gray-500: var(--color-gray-500);
-  --daw-gray-600: var(--color-gray-600);
-  --daw-gray-700: var(--color-gray-700);
-  --daw-gray-800: var(--color-gray-800);
-  --daw-gray-900: var(--color-gray-900);
+  --daw-gray-50: var(--color-neutral-50);
+  --daw-gray-100: var(--color-neutral-100);
+  --daw-gray-200: var(--color-neutral-200);
+  --daw-gray-300: var(--color-neutral-300);
+  --daw-gray-400: var(--color-neutral-400);
+  --daw-gray-500: var(--color-neutral-500);
+  --daw-gray-600: var(--color-neutral-600);
+  --daw-gray-700: var(--color-neutral-700);
+  --daw-gray-800: var(--color-neutral-800);
+  --daw-gray-900: var(--color-neutral-900);
   --daw-white: #ffffff;
   --daw-blue-100: var(--color-blue-100);
   --daw-blue-200: var(--color-blue-200);
@@ -35,15 +35,15 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --daw-gray-50: var(--color-gray-950);
-    --daw-gray-100: var(--color-gray-900);
-    --daw-gray-200: var(--color-gray-800);
-    --daw-gray-300: var(--color-gray-700);
-    --daw-gray-400: var(--color-gray-600);
-    --daw-gray-600: var(--color-gray-400);
-    --daw-gray-700: var(--color-gray-300);
-    --daw-gray-800: var(--color-gray-200);
-    --daw-gray-900: var(--color-gray-100);
+    --daw-gray-50: var(--color-neutral-950);
+    --daw-gray-100: var(--color-neutral-900);
+    --daw-gray-200: var(--color-neutral-800);
+    --daw-gray-300: var(--color-neutral-700);
+    --daw-gray-400: var(--color-neutral-600);
+    --daw-gray-600: var(--color-neutral-400);
+    --daw-gray-700: var(--color-neutral-300);
+    --daw-gray-800: var(--color-neutral-200);
+    --daw-gray-900: var(--color-neutral-100);
     --daw-white: #000000;
     --daw-blue-100: var(--color-blue-900);
     --daw-blue-200: var(--color-blue-800);

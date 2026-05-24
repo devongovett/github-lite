@@ -16,7 +16,7 @@ export function IssuePage({owner, repo, number}: {owner: string, repo: string, n
   }
 
   return (
-    <div className="flex flex-col gap-4 my-4 max-w-3xl mx-auto">
+    <div className="flex flex-col gap-4 my-4 w-full max-w-3xl mx-auto">
       <Header data={data} />
       <CommentCard data={data} />
       <Timeline items={data.timelineItems.nodes!} />

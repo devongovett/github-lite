@@ -114,7 +114,7 @@ function Notification({selectedItem}: {selectedItem: Notification | undefined}) 
       break;
     default:
       content = (
-        <div className="flex items-center justify-center h-full text-lg text-gray-700 font-semibold">
+        <div className="flex items-center justify-center h-full text-lg text-neutral-700 font-semibold">
           {selectedItem ? `Unknown item type: ${selectedItem.subject.type}` : 'No notification selected.'}
         </div>
       );

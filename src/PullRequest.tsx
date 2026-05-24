@@ -322,7 +322,7 @@ function Merge({data}: {data: PullRequest}) {
       <div className="flex gap-2 items-center justify-space-between">
         <p className="text-xs text-daw-gray-600 text-balance flex-1">Conflicts must be resolved before merging.</p>
         {data.viewerCanUpdateBranch &&
-          <Button className="shrink-0 px-4 py-2 rounded-md bg-gray-600 pressed:bg-gray-700 border border-gray-500 pressed:border-gray-600 text-white cursor-default outline-none focus-visible:ring-2 ring-offset-2 ring-blue-600">Update branch</Button>
+          <Button className="shrink-0 px-4 py-2 rounded-md bg-neutral-600 pressed:bg-neutral-700 border border-neutral-500 pressed:border-neutral-600 text-white cursor-default outline-none focus-visible:ring-2 ring-offset-2 ring-blue-600">Update branch</Button>
         }
       </div>
     );
