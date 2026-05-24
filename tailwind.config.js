@@ -4,5 +4,5 @@ module.exports = {
   theme: {
     extend: {},
   },
-  plugins: [require('tailwind-dark-aware'), require('tailwindcss-react-aria-components')]
+  plugins: [require('tailwindcss-react-aria-components')]
 }

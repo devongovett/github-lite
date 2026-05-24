@@ -1,6 +1,96 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+
+/* Dark-aware color variables: shades invert automatically in dark mode (50↔950, 100↔900, etc.) */
+:root {
+  --daw-gray-50: var(--color-gray-50);
+  --daw-gray-100: var(--color-gray-100);
+  --daw-gray-200: var(--color-gray-200);
+  --daw-gray-300: var(--color-gray-300);
+  --daw-gray-400: var(--color-gray-400);
+  --daw-gray-500: var(--color-gray-500);
+  --daw-gray-600: var(--color-gray-600);
+  --daw-gray-700: var(--color-gray-700);
+  --daw-gray-800: var(--color-gray-800);
+  --daw-gray-900: var(--color-gray-900);
+  --daw-white: #ffffff;
+  --daw-blue-100: var(--color-blue-100);
+  --daw-blue-200: var(--color-blue-200);
+  --daw-blue-300: var(--color-blue-300);
+  --daw-blue-800: var(--color-blue-800);
+  --daw-purple-100: var(--color-purple-100);
+  --daw-purple-200: var(--color-purple-200);
+  --daw-purple-700: var(--color-purple-700);
+  --daw-red-100: var(--color-red-100);
+  --daw-red-200: var(--color-red-200);
+  --daw-red-500: var(--color-red-500);
+  --daw-red-700: var(--color-red-700);
+  --daw-green-100: var(--color-green-100);
+  --daw-green-200: var(--color-green-200);
+  --daw-green-500: var(--color-green-500);
+  --daw-green-700: var(--color-green-700);
+  --daw-yellow-500: var(--color-yellow-500);
+  --daw-yellow-600: var(--color-yellow-600);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --daw-gray-50: var(--color-gray-950);
+    --daw-gray-100: var(--color-gray-900);
+    --daw-gray-200: var(--color-gray-800);
+    --daw-gray-300: var(--color-gray-700);
+    --daw-gray-400: var(--color-gray-600);
+    --daw-gray-600: var(--color-gray-400);
+    --daw-gray-700: var(--color-gray-300);
+    --daw-gray-800: var(--color-gray-200);
+    --daw-gray-900: var(--color-gray-100);
+    --daw-white: #000000;
+    --daw-blue-100: var(--color-blue-900);
+    --daw-blue-200: var(--color-blue-800);
+    --daw-blue-300: var(--color-blue-700);
+    --daw-blue-800: var(--color-blue-200);
+    --daw-purple-100: var(--color-purple-900);
+    --daw-purple-200: var(--color-purple-800);
+    --daw-purple-700: var(--color-purple-300);
+    --daw-red-100: var(--color-red-900);
+    --daw-red-200: var(--color-red-800);
+    --daw-red-700: var(--color-red-300);
+    --daw-green-100: var(--color-green-900);
+    --daw-green-200: var(--color-green-800);
+    --daw-green-700: var(--color-green-300);
+    --daw-yellow-600: var(--color-yellow-400);
+  }
+}
+
+@theme inline {
+  --color-daw-gray-50: var(--daw-gray-50);
+  --color-daw-gray-100: var(--daw-gray-100);
+  --color-daw-gray-200: var(--daw-gray-200);
+  --color-daw-gray-300: var(--daw-gray-300);
+  --color-daw-gray-400: var(--daw-gray-400);
+  --color-daw-gray-500: var(--daw-gray-500);
+  --color-daw-gray-600: var(--daw-gray-600);
+  --color-daw-gray-700: var(--daw-gray-700);
+  --color-daw-gray-800: var(--daw-gray-800);
+  --color-daw-gray-900: var(--daw-gray-900);
+  --color-daw-white: var(--daw-white);
+  --color-daw-blue-100: var(--daw-blue-100);
+  --color-daw-blue-200: var(--daw-blue-200);
+  --color-daw-blue-300: var(--daw-blue-300);
+  --color-daw-blue-800: var(--daw-blue-800);
+  --color-daw-purple-100: var(--daw-purple-100);
+  --color-daw-purple-200: var(--daw-purple-200);
+  --color-daw-purple-700: var(--daw-purple-700);
+  --color-daw-red-100: var(--daw-red-100);
+  --color-daw-red-200: var(--daw-red-200);
+  --color-daw-red-500: var(--daw-red-500);
+  --color-daw-red-700: var(--daw-red-700);
+  --color-daw-green-100: var(--daw-green-100);
+  --color-daw-green-200: var(--daw-green-200);
+  --color-daw-green-500: var(--daw-green-500);
+  --color-daw-green-700: var(--daw-green-700);
+  --color-daw-yellow-500: var(--daw-yellow-500);
+  --color-daw-yellow-600: var(--daw-yellow-600);
+}
 
 p > code {
   @apply border border-daw-gray-200 rounded px-1 bg-daw-gray-50;
