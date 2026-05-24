@@ -51,8 +51,8 @@ export function PullRequestPage({owner, repo, number}: {owner: string, repo: str
             Files
           </Tab>
         </TabList>
-        <div className="border-b border-daw-gray-200 mb-4 mx-2" />
-        <TabPanel id="overview" className="flex flex-col gap-4 max-w-3xl mx-auto w-full">
+        <div className="border-b border-daw-gray-200 mx-2" />
+        <TabPanel id="overview" className="flex flex-col gap-4 mt-4 max-w-3xl mx-auto w-full">
           <CommentCard data={data} />
           <PullHeader data={data} />
           <Timeline items={data.timelineItems.nodes!} />

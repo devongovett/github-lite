@@ -3,9 +3,11 @@
     "jsx": "react-jsx",
     "strict": true,
     "strictFunctionTypes": true,
-    "moduleResolution": "node",
+    "moduleResolution": "bundler",
     "allowSyntheticDefaultImports": true,
     "isolatedModules": true,
+    "skipLibCheck": true,
+    "types": ["node"],
     "target": "ES2020",
     "lib": [
       "esnext",

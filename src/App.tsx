@@ -2,24 +2,33 @@ import {RestEndpointMethodTypes} from '@octokit/rest';
 import {github, preload} from './client';
 import { PullRequestPage } from './PullRequest';
 import { IssuePage } from './Issue';
-import { ListBox, ListBoxItem, Text, RouterProvider } from 'react-aria-components';
+import { Collection, ListBox, ListBoxItem, ListBoxLoadMoreItem, Text, RouterProvider } from 'react-aria-components';
+import {Virtualizer, ListLayout} from 'react-aria-components/Virtualizer';
 import { Route, Routes, useLocation, useNavigate } from 'react-router-dom';
-import useSWR, {mutate} from 'swr';
-import { useEffect } from 'react';
+import useSWRInfinite from 'swr/infinite';
+import { useCallback, useEffect, useRef } from 'react';
 
 type Notification = RestEndpointMethodTypes["activity"]["listNotificationsForAuthenticatedUser"]["response"]["data"][0];
 
-async function fetchNotifications() {
+const PER_PAGE = 50;
+
+const getKey = (pageIndex: number, previousPageData: Notification[] | null) => {
+  if (previousPageData && previousPageData.length < PER_PAGE) return null;
+  return ['notifications', pageIndex + 1] as const;
+};
+
+async function fetchNotificationsPage([, page]: readonly [string, number]): Promise<Notification[]> {
   let res = await github.activity.listNotificationsForAuthenticatedUser({
-    page: 1,
+    page,
+    per_page: PER_PAGE,
     all: true,
-    headers: {
-      'If-None-Match': ''
-    }
+    headers: { 'If-None-Match': '' }
   });
 
-  for (let item of res.data.slice(0, 10)) {
-    preloadNotification(item);
+  if (page === 1) {
+    for (let item of res.data.slice(0, 10)) {
+      preloadNotification(item);
+    }
   }
 
   return res.data;
@@ -44,27 +53,64 @@ function Login() {
 }
 
 function Notifications() {
-  let {data} = useSWR('notifications', fetchNotifications);
+  let {data, size, setSize, isLoading, isValidating, mutate, error} = useSWRInfinite(getKey, fetchNotificationsPage);
   let {pathname} = useLocation();
+
+  let notifications = data?.flat() ?? [];
+  let isLoadingMore = !isLoading && isValidating && (data?.length ?? 0) < size;
+
+  const markAsRead = useCallback((id: string) => {
+    mutate(
+      currentData => currentData?.map(page => page.map(n => n.id === id ? {...n, unread: false} : n)),
+      {revalidate: false}
+    );
+    github.activity.markThreadAsRead({thread_id: Number(id)});
+  }, [mutate]);
 
   return (
     <div className="flex h-full">
       <div className="w-[280px] border-r border-daw-gray-300 overflow-hidden">
-        <ListBox
-          aria-label="Notifications"
-          items={data}
-          selectionMode="single"
-          selectionBehavior="replace"
-          // @ts-ignore - TODO expose in RAC
-          linkBehavior="selection"
-          selectedKeys={[pathname]}
-          disallowEmptySelection
-          className="h-full max-h-screen overflow-auto p-2 flex flex-col gap-1">
-          {item => <NotificationItem item={item} />}
-        </ListBox>
+        <Virtualizer layout={ListLayout} layoutOptions={{estimatedRowSize: 56, padding: 8, gap: 4}}>
+          <ListBox
+            aria-label="Notifications"
+            selectionMode="single"
+            selectionBehavior="replace"
+            // @ts-ignore - TODO expose in RAC
+            linkBehavior="selection"
+            selectedKeys={[pathname]}
+            disallowEmptySelection
+            className="h-full overflow-auto"
+            style={{display: 'block', padding: 0}}
+            renderEmptyState={() => isLoading && (
+              <div className="flex justify-center items-center h-full">
+                <div className="w-5 h-5 border-2 border-daw-gray-300 border-t-blue-500 rounded-full animate-spin" />
+              </div>
+            )}>
+            <Collection items={notifications}>
+              {item => <NotificationItem item={item} />}
+            </Collection>
+            <ListBoxLoadMoreItem
+              isLoading={isLoadingMore}
+              onLoadMore={() => {
+                if (!isLoading && !isValidating && !error) {
+                  console.log(size)
+                  setSize(size + 1);
+                }
+              }}>
+              <div className="flex justify-center items-center h-12">
+                <div className="w-5 h-5 border-2 border-daw-gray-300 border-t-blue-500 rounded-full animate-spin" />
+              </div>
+            </ListBoxLoadMoreItem>
+          </ListBox>
+        </Virtualizer>
       </div>
       <Routes>
-        <Route path="/*" element={<Notification selectedItem={data?.find(d => d.id === pathname.slice(1))} />} />
+        <Route path="/*" element={
+          <Notification
+            selectedItem={notifications.find(d => d.id === pathname.slice(1))}
+            markAsRead={markAsRead}
+          />
+        } />
       </Routes>
     </div>
   );
@@ -103,14 +149,14 @@ function preloadNotification(item: Notification) {
   }
 }
 
-function Notification({selectedItem}: {selectedItem: Notification | undefined}) {
+function Notification({selectedItem, markAsRead}: {selectedItem: Notification | undefined, markAsRead: (id: string) => void}) {
   let content;
   switch (selectedItem?.subject.type) {
     case 'PullRequest':
-      content = <PullRequestPage key={selectedItem.id} owner={selectedItem.repository.owner.login} repo={ selectedItem.repository.name} number={Number(selectedItem.subject.url.split('/').pop())} />;
+      content = <PullRequestPage key={selectedItem.id} owner={selectedItem.repository.owner.login} repo={selectedItem.repository.name} number={Number(selectedItem.subject.url.split('/').pop())} />;
       break;
     case 'Issue':
-      content = <IssuePage key={selectedItem.id} owner={selectedItem.repository.owner.login} repo={ selectedItem.repository.name} number={Number(selectedItem.subject.url.split('/').pop())} />;
+      content = <IssuePage key={selectedItem.id} owner={selectedItem.repository.owner.login} repo={selectedItem.repository.name} number={Number(selectedItem.subject.url.split('/').pop())} />;
       break;
     default:
       content = (
@@ -132,17 +178,4 @@ function Notification({selectedItem}: {selectedItem: Notification | undefined}) 
       {content}
     </div>
   );
-}
-
-function markAsRead(id: string) {
-  mutate('notifications', async (notifications?: Notification[]) => {
-    await github.activity.markThreadAsRead({thread_id: Number(id)});
-    if (notifications) {
-      let index = notifications.findIndex(n => n.id === id);
-      let result = [...notifications];
-      result[index] = {...result[index], unread: false};
-      return result;
-    }
-    return notifications;
-  });
 }
