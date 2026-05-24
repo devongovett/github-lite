@@ -1,5 +1,5 @@
 import { AutomaticBaseChangeSucceededEvent, ClosedEvent, CommentDeletedEvent, Commit, ConvertToDraftEvent, CrossReferencedEvent, HeadRefDeletedEvent, HeadRefForcePushedEvent, IssueTimelineItems, LabeledEvent, MergedEvent, PullRequestCommit, PullRequestReview, PullRequestReviewThread, PullRequestTimelineItems, ReadyForReviewEvent, ReferencedEvent, RenamedTitleEvent, ReopenedEvent, ReviewDismissedEvent, ReviewRequestedEvent, UnlabeledEvent } from '@octokit/graphql-schema';
-import { CheckCircleIcon, CommitIcon, CrossReferenceIcon, EyeIcon, GitBranchIcon, GitMergeIcon, GitPullRequestClosedIcon, GitPullRequestDraftIcon, IssueClosedIcon, IssueReopenedIcon, PencilIcon, RepoPushIcon, SkipIcon, TagIcon, XIcon } from '@primer/octicons-react';
+import { CheckCircleIcon, GitCommitIcon, CrossReferenceIcon, EyeIcon, GitBranchIcon, GitMergeIcon, GitPullRequestClosedIcon, GitPullRequestDraftIcon, IssueClosedIcon, IssueReopenedIcon, PencilIcon, RepoPushIcon, SkipIcon, TagIcon, XIcon } from '@primer/octicons-react';
 import { useContext } from 'react';
 import { useDateFormatter } from 'react-aria';
 import { Button, Link } from 'react-aria-components';
@@ -360,7 +360,7 @@ function PullRequestThread({data}: {data: PullRequestReviewThread}) {
           ))}
           <CommentForm>
             {data.viewerCanResolve &&
-              <Button className="flex-shrink-0 px-4 py-2 rounded-md bg-daw-gray-300 pressed:bg-daw-gray-400 border border-daw-gray-400 pressed:border-daw-gray-500 text-daw-gray-800 text-sm font-medium cursor-default outline-none focus-visible:ring-2 ring-offset-2 ring-blue-600">Resolve conversation</Button>
+              <Button className="shrink-0 px-4 py-2 rounded-md bg-daw-gray-300 pressed:bg-daw-gray-400 border border-daw-gray-400 pressed:border-daw-gray-500 text-daw-gray-800 text-sm font-medium cursor-default outline-none focus-visible:ring-2 ring-offset-2 ring-blue-600">Resolve conversation</Button>
             }
           </CommentForm>
         </div>
@@ -573,7 +573,7 @@ fragment ReferencedEventFragment on ReferencedEvent {
 function Committed({data}: {data: PullRequestCommit}) {
   return (
     <div className="flex gap-2 items-center">
-      <Icon className="text-daw-gray-800"><CommitIcon /></Icon>
+      <Icon className="text-daw-gray-800"><GitCommitIcon /></Icon>
       <Avatar src={data.commit.author!.avatarUrl} />
       <span className="flex-1 line-clamp-2 text-sm"><Link href={data.commit.commitUrl} target="_blank" className="hover:underline">{data.commit.message}</Link></span>
       {data.commit.statusCheckRollup && <Status state={data.commit.statusCheckRollup.state} />}

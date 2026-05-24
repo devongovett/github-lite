@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@plugin "tailwindcss-react-aria-components";
 
 /* Dark-aware color variables: shades invert automatically in dark mode (50↔950, 100↔900, etc.) */
 :root {

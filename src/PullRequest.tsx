@@ -266,9 +266,9 @@ function Merge({data}: {data: PullRequest}) {
   if (data.mergeable !== 'MERGEABLE') {
     return (
       <div className="flex gap-2 items-center justify-space-between">
-        <p className="text-xs text-daw-gray-600 [text-wrap:balance] flex-1">Conflicts must be resolved before merging.</p>
+        <p className="text-xs text-daw-gray-600 text-balance flex-1">Conflicts must be resolved before merging.</p>
         {data.viewerCanUpdateBranch &&
-          <Button className="flex-shrink-0 px-4 py-2 rounded-md bg-gray-600 pressed:bg-gray-700 border border-gray-500 pressed:border-gray-600 text-white cursor-default outline-none focus-visible:ring-2 ring-offset-2 ring-blue-600">Update branch</Button>
+          <Button className="shrink-0 px-4 py-2 rounded-md bg-gray-600 pressed:bg-gray-700 border border-gray-500 pressed:border-gray-600 text-white cursor-default outline-none focus-visible:ring-2 ring-offset-2 ring-blue-600">Update branch</Button>
         }
       </div>
     );
@@ -285,8 +285,8 @@ function Merge({data}: {data: PullRequest}) {
   if (data.viewerCanMergeAsAdmin) {
     return (
       <div className="flex gap-2 items-center justify-space-between">
-        <p className="text-xs text-daw-gray-600 [text-wrap:balance]">Use your administrator privileges to merge this pull request immediately without waiting for requirements to be met.</p>
-        <Button className="flex-shrink-0 px-4 py-2 rounded-md bg-red-600 pressed:bg-red-700 border border-red-500 pressed:border-red-600 text-white cursor-default outline-none focus-visible:ring-2 ring-offset-2 ring-blue-600">Merge as administrator</Button>
+        <p className="text-xs text-daw-gray-600 text-balance">Use your administrator privileges to merge this pull request immediately without waiting for requirements to be met.</p>
+        <Button className="shrink-0 px-4 py-2 rounded-md bg-red-600 pressed:bg-red-700 border border-red-500 pressed:border-red-600 text-white cursor-default outline-none focus-visible:ring-2 ring-offset-2 ring-blue-600">Merge as administrator</Button>
       </div>
     );
   }

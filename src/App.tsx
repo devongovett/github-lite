@@ -2,7 +2,7 @@ import {RestEndpointMethodTypes} from '@octokit/rest';
 import {github, preload} from './client';
 import { PullRequestPage } from './PullRequest';
 import { IssuePage } from './Issue';
-import { ListBox, Item, Text, RouterProvider } from 'react-aria-components';
+import { ListBox, ListBoxItem, Text, RouterProvider } from 'react-aria-components';
 import { Route, Routes, useLocation, useNavigate } from 'react-router-dom';
 import useSWR, {mutate} from 'swr';
 import { useEffect } from 'react';
@@ -59,7 +59,7 @@ function Notifications() {
           linkBehavior="selection"
           selectedKeys={[pathname]}
           disallowEmptySelection
-          className="h-full max-h-[100vh] overflow-auto p-2 flex flex-col gap-1">
+          className="h-full max-h-screen overflow-auto p-2 flex flex-col gap-1">
           {item => <NotificationItem item={item} />}
         </ListBox>
       </div>
@@ -72,7 +72,7 @@ function Notifications() {
 
 function NotificationItem({item}: {item: Notification}) {
   return (
-    <Item
+    <ListBoxItem
       textValue={item.subject.title}
       id={`/${item.id}`}
       href={`/${item.id}`}
@@ -88,7 +88,7 @@ function NotificationItem({item}: {item: Notification}) {
           <Text slot="description" className="text-xs col-start-2 text-daw-gray-600 group-aria-selected:text-daw-gray-300 truncate">{item.repository.full_name} #{item.subject.url?.split('/').pop()}</Text>
         </>;
       }}
-    </Item>
+    </ListBoxItem>
   );
 }
 
