@@ -1,8 +1,7 @@
 import { PullRequest, PullRequestReviewDecision, Repository } from '@octokit/graphql-schema';
 import { Fragment, createContext } from 'react';
 import { Button, Link, Tab, TabList, TabPanel, Tabs } from 'react-aria-components';
-import { CodeView } from '@pierre/diffs/react';
-import { parsePatchFiles, type CodeViewDiffItem, type DiffLineAnnotation } from '@pierre/diffs';
+import { DiffCodeView } from './DiffCodeView';
 import { PullRequestThread } from './Timeline';
 import type { PullRequestReviewThread } from '@octokit/graphql-schema';
 import { Header } from './Issue';
@@ -60,7 +59,7 @@ export function PullRequestPage({owner, repo, number}: {owner: string, repo: str
         </TabPanel>
         <TabPanel id="files" className="flex-1 min-h-0">
           {patch
-            ? <DiffCodeView patch={patch} threads={(data.reviewThreads.nodes ?? []) as Thread[]} />
+            ? <DiffCodeView patch={patch} threads={(data.reviewThreads.nodes ?? []) as Thread[]} renderAnnotation={annotation => <div className="font-sans text-base mx-2"><PullRequestThread data={annotation.metadata} /></div>} />
             : <div className="text-sm text-daw-gray-500 py-4 max-w-3xl mx-auto w-full">Loading diff…</div>
           }
         </TabPanel>
@@ -169,44 +168,6 @@ ${Timeline.pullRequestFragment()}
 `;
 
 type Thread = PullRequestReviewThread;
-type ThreadAnnotation = DiffLineAnnotation<Thread>;
-
-function DiffCodeView({patch, threads}: {patch: string, threads: Thread[]}) {
-  let threadsByPath = new Map<string, Thread[]>();
-  for (let thread of threads) {
-    if (!thread.path || thread.line == null) continue;
-    let list = threadsByPath.get(thread.path);
-    if (!list) threadsByPath.set(thread.path, list = []);
-    list.push(thread);
-  }
-
-  let items: CodeViewDiffItem<Thread>[] = parsePatchFiles(patch).flatMap((parsed, pi) =>
-    parsed.files.map((file, fi) => {
-      let fileThreads = threadsByPath.get(file.name) ?? [];
-      let annotations: ThreadAnnotation[] = fileThreads.map(thread => ({
-        side: thread.diffSide === 'LEFT' ? 'deletions' : 'additions',
-        lineNumber: thread.line!,
-        metadata: thread,
-      }));
-      return { id: `${pi}:${fi}:${file.name}`, type: 'diff' as const, fileDiff: file, annotations };
-    })
-  );
-
-  return (
-    <CodeView
-      items={items}
-      options={{
-        theme: { dark: 'pierre-dark', light: 'pierre-light' },
-        themeType: 'system',
-        stickyHeaders: true,
-        diffStyle: 'unified',
-        enableGutterUtility: true
-      }}
-      className="h-full overflow-auto"
-      renderAnnotation={annotation => <div className="font-sans text-base mx-2"><PullRequestThread data={(annotation as ThreadAnnotation).metadata} /></div>}
-    />
-  );
-}
 
 function PullHeader({data}: {data: PullRequest}) {
   return (
