@@ -26,6 +26,7 @@ export interface ListProps<T extends object> {
   isLoadingMore: boolean;
   onLoadMore: () => void;
   children: (item: T) => ReactNode;
+  header?: ReactNode;
 }
 
 export function List<T extends object>({
@@ -35,10 +36,13 @@ export function List<T extends object>({
   isLoading,
   isLoadingMore,
   onLoadMore,
-  children
+  children,
+  header
 }: ListProps<T>) {
   return (
-    <div className="w-[280px] border-r border-daw-gray-300 overflow-hidden shrink-0">
+    <div className="w-[280px] border-r border-daw-gray-300 shrink-0 flex flex-col">
+      {header}
+      <div className="flex-1 overflow-hidden">
       <Virtualizer layout={ListLayout} layoutOptions={{estimatedRowSize: 56, padding: 8, gap: 4}}>
         <ListBox
           aria-label={ariaLabel}
@@ -59,6 +63,7 @@ export function List<T extends object>({
           </ListBoxLoadMoreItem>
         </ListBox>
       </Virtualizer>
+      </div>
     </div>
   );
 }
