@@ -1,9 +1,10 @@
 import { ListBox, ListBoxItem, RouterProvider } from 'react-aria-components';
 import { Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-dom';
-import { BellIcon, GitPullRequestIcon, IssueOpenedIcon } from '@primer/octicons-react';
+import { BellIcon, CommentDiscussionIcon, GitPullRequestIcon, IssueOpenedIcon } from '@primer/octicons-react';
 import { NotificationsView } from './Notifications';
 import { IssuesView } from './Issues';
 import { PullsView } from './Pulls';
+import { DiscussionsView } from './Discussions';
 
 export function App() {
   let navigate = useNavigate();
@@ -18,6 +19,7 @@ export function App() {
           <Route path="/notifications/*" element={<NotificationsView />} />
           <Route path="/issues/*" element={<IssuesView />} />
           <Route path="/pulls/*" element={<PullsView />} />
+          <Route path="/discussions/*" element={<DiscussionsView />} />
           <Route path="*" element={<Navigate to="/notifications" replace />} />
         </Routes>
       </div>
@@ -57,6 +59,11 @@ function SourceSelector() {
         className="flex flex-col items-center gap-1 py-2 rounded-md cursor-default outline-none hover:bg-daw-gray-100 selected:bg-daw-gray-900 selected:text-daw-white focus-visible:outline-2 outline-blue-600">
         <GitPullRequestIcon size={18} />
         <span className="text-[10px] font-medium leading-none">PRs</span>
+      </ListBoxItem>
+      <ListBoxItem id="/discussions" href="/discussions" textValue="Discussions"
+        className="flex flex-col items-center gap-1 py-2 rounded-md cursor-default outline-none hover:bg-daw-gray-100 selected:bg-daw-gray-900 selected:text-daw-white focus-visible:outline-2 outline-blue-600">
+        <CommentDiscussionIcon size={18} />
+        <span className="text-[10px] font-medium leading-none">Discuss</span>
       </ListBoxItem>
     </ListBox>
   );

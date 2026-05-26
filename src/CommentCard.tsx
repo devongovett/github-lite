@@ -1,4 +1,4 @@
-import { Issue, IssueComment, PullRequest, PullRequestReviewComment, ReactionContent, ReactionGroup } from '@octokit/graphql-schema';
+import { Discussion, DiscussionComment, Issue, IssueComment, PullRequest, PullRequestReviewComment, ReactionContent, ReactionGroup } from '@octokit/graphql-schema';
 import { SmileyIcon } from '@primer/octicons-react';
 import Markdown from 'markdown-to-jsx';
 import { useState } from 'react';
@@ -7,7 +7,7 @@ import { Button, Dialog, DialogTrigger, Link, Popover, ToggleButton } from 'reac
 import { Avatar, Card } from './components';
 import { graphql } from './client';
 
-export function CommentCard({data}: {data: Issue | PullRequest | IssueComment | PullRequestReviewComment}) {
+export function CommentCard({data}: {data: Issue | PullRequest | IssueComment | PullRequestReviewComment | Discussion | DiscussionComment}) {
   let df = useDateFormatter({
     year: 'numeric',
     month: 'numeric',

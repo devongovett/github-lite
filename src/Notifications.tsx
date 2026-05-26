@@ -2,6 +2,7 @@ import { RestEndpointMethodTypes } from '@octokit/rest';
 import { github, preload } from './client';
 import { PullRequestPage } from './PullRequest';
 import { IssuePage } from './Issue';
+import { DiscussionPage } from './Discussion';
 import { Route, Routes, useLocation, useParams } from 'react-router-dom';
 import useSWRInfinite from 'swr/infinite';
 import { useCallback, useEffect } from 'react';
@@ -34,6 +35,9 @@ function preloadNotification(item: Notification) {
       break;
     case 'Issue':
       preload(IssuePage.query(), {owner: item.repository.owner.login, repo: item.repository.name, number: Number(item.subject.url.split('/').pop())});
+      break;
+    case 'Discussion':
+      preload(DiscussionPage.query(), {owner: item.repository.owner.login, repo: item.repository.name, number: Number(item.subject.url.split('/').pop())});
       break;
   }
 }
@@ -105,6 +109,8 @@ function NotificationDetail({notifications, markAsRead}: {notifications: Notific
       return <PullRequestPage key={item.id} owner={item.repository.owner.login} repo={item.repository.name} number={Number(item.subject.url.split('/').pop())} />;
     case 'Issue':
       return <IssuePage key={item.id} owner={item.repository.owner.login} repo={item.repository.name} number={Number(item.subject.url.split('/').pop())} />;
+    case 'Discussion':
+      return <DiscussionPage key={item.id} owner={item.repository.owner.login} repo={item.repository.name} number={Number(item.subject.url.split('/').pop())} />;
     default:
       return <EmptyDetail text={item ? `Unknown type: ${item.subject.type}` : 'No notification selected.'} />;
   }
