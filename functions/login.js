@@ -1,6 +1,6 @@
 export async function onRequestPost({request, env}) {
   try {
-    const { code } = await request.json();
+    const {code} = await request.json();
 
     const response = await fetch(
       "https://github.com/login/oauth/access_token",
