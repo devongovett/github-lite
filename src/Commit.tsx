@@ -1,6 +1,7 @@
 import { RestEndpointMethodTypes } from '@octokit/rest';
-import { Link } from 'react-aria-components';
+import { Button, Link } from 'react-aria-components';
 import { useDateFormatter } from 'react-aria';
+import { useState } from 'react';
 import useSWR, { preload as swrPreload } from 'swr';
 import { github } from './client';
 import { DiffCodeView } from './DiffCodeView';
@@ -64,7 +65,7 @@ function CommitHeader({commit, owner, repo}: {commit: CommitData, owner: string,
         </Link>
       </div>
       <h1 className="text-2xl font-semibold">{title}</h1>
-      {body && <pre className="text-sm text-daw-gray-600 whitespace-pre-wrap font-sans">{body}</pre>}
+      {body && <CommitBody body={body} />}
       <div className="flex items-center gap-2 text-sm text-daw-gray-600">
         <Avatar src={avatarUrl} size="s" />
         <span>{authorName}</span>
@@ -75,6 +76,21 @@ function CommitHeader({commit, owner, repo}: {commit: CommitData, owner: string,
         <span>·</span>
         <span className="text-daw-gray-500">{commit.stats?.additions ?? 0} additions, {commit.stats?.deletions ?? 0} deletions</span>
       </div>
+    </div>
+  );
+}
+
+function CommitBody({ body }: { body: string }) {
+  let [expanded, setExpanded] = useState(false);
+  let lines = body.split('\n');
+  return (
+    <div className={`flex ${expanded ? 'flex-col items-start' : 'items-baseline'} gap-0.5`} >
+      <pre className={`text-sm text-daw-gray-600 whitespace-pre-wrap font-sans`}>{expanded ? body : lines[0]}</pre>
+      {lines.length > 1 && <Button
+        onPress={() => setExpanded(e => !e)}
+        className="text-xs text-daw-gray-400 hover:text-daw-gray-600 cursor-default outline-none focus-visible:ring-1 ring-blue-600 rounded px-0.5 -mt-0.5">
+        {expanded ? 'Less' : '···'}
+      </Button>}
     </div>
   );
 }

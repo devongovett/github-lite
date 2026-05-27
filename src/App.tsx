@@ -1,10 +1,11 @@
 import { ListBox, ListBoxItem, RouterProvider } from 'react-aria-components';
 import { Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-dom';
-import { BellIcon, CommentDiscussionIcon, GitPullRequestIcon, IssueOpenedIcon } from '@primer/octicons-react';
+import { BellIcon, CommentDiscussionIcon, GitCommitIcon, GitPullRequestIcon, IssueOpenedIcon } from '@primer/octicons-react';
 import { NotificationsView } from './Notifications';
 import { IssuesView } from './Issues';
 import { PullsView } from './Pulls';
 import { DiscussionsView } from './Discussions';
+import { CommitsView } from './Commits';
 
 export function App() {
   let navigate = useNavigate();
@@ -20,6 +21,7 @@ export function App() {
           <Route path="/issues/*" element={<IssuesView />} />
           <Route path="/pulls/*" element={<PullsView />} />
           <Route path="/discussions/*" element={<DiscussionsView />} />
+          <Route path="/commits/*" element={<CommitsView />} />
           <Route path="*" element={<Navigate to="/notifications" replace />} />
         </Routes>
       </div>
@@ -64,6 +66,11 @@ function SourceSelector() {
         className="flex flex-col items-center gap-1 py-2 rounded-md cursor-default outline-none hover:bg-daw-gray-100 selected:bg-daw-gray-900 selected:text-daw-white focus-visible:outline-2 outline-blue-600">
         <CommentDiscussionIcon size={18} />
         <span className="text-[10px] font-medium leading-none">Discuss</span>
+      </ListBoxItem>
+      <ListBoxItem id="/commits" href="/commits" textValue="Commits"
+        className="flex flex-col items-center gap-1 py-2 rounded-md cursor-default outline-none hover:bg-daw-gray-100 selected:bg-daw-gray-900 selected:text-daw-white focus-visible:outline-2 outline-blue-600">
+        <GitCommitIcon size={18} />
+        <span className="text-[10px] font-medium leading-none">Commits</span>
       </ListBoxItem>
     </ListBox>
   );
