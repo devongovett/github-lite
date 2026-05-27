@@ -85,9 +85,7 @@ function Toolbar() {
 
   function handleRepoChange(nameWithOwner: string) {
     localStorage.setItem('github_lite_repo', nameWithOwner);
-    if (!isNotifications) {
-      navigate(`/${nameWithOwner}/${section}`);
-    }
+    navigate(`/${nameWithOwner}/${isNotifications ? 'issues' : section}`);
   }
 
   return (

@@ -54,7 +54,7 @@ export function Timeline({items}: {items: (IssueTimelineItems | PullRequestTimel
         case 'SubscribedEvent':
           return null;
         default:
-          return <p key={i}>Unknown event <code className="break-all">{JSON.stringify(item)}</code></p>;
+          return <p key={i}>Unknown event <code className="break-all text-xs">{JSON.stringify(item)}</code></p>;
       }
     })}
   </>;
@@ -225,7 +225,7 @@ fragment MergedEventFragment on MergedEvent {
 `;
 
 function CommitLink({commit}: {commit: Commit}) {
-  return <Link target="_blank" href={commit.url} className="text-sm hover:underline"><code>{commit.abbreviatedOid}</code></Link>;
+  return <Link target="_blank" href={commit.url} className="text-xs hover:underline"><code>{commit.abbreviatedOid}</code></Link>;
 }
 
 function BranchDeleted({data}: {data: HeadRefDeletedEvent}) {
@@ -344,7 +344,7 @@ export function PullRequestThread({data}: {data: PullRequestReviewThread}) {
         <summary className="font-mono text-xs cursor-default">
           {data.path}
         </summary>
-        <div className="flex flex-col gap-4 pt-3 mt-3 border-t border-daw-gray-200">
+        <div className="flex flex-col gap-4 pt-3 mt-3 border-t border-daw-gray-200 whitespace-normal text-sm">
           {data.comments.nodes?.map(comment => (
             <div key={comment!.id} className="flex flex-col gap-2 pb-4 border-b border-daw-gray-200">
               <div>
@@ -352,7 +352,7 @@ export function PullRequestThread({data}: {data: PullRequestReviewThread}) {
                 {' • '}
                 <span className="text-xs text-daw-gray-600" style={{gridArea: 'date'}}>{df.format(new Date(comment!.createdAt))}</span>
               </div>
-              <div style={{gridArea: 'body'}}>
+              <div>
                 <CommentBody>{comment!.body}</CommentBody>
               </div>
               {comment!.reactionGroups && <Reactions id={comment!.id} data={comment!.reactionGroups} />}
@@ -464,7 +464,7 @@ function CrossReferenced({data}: {data: CrossReferencedEvent}) {
       <span><User actor={data.actor!} /> referenced this</span>
       <Card gridArea="issue">
         <div className="flex gap-1 items-center">
-          <div className="flex flex-col gap-1 flex-1">
+          <div className="flex flex-col gap-1 flex-1 min-w-0">
             <Link href={data.source.url} target="_blank" className="truncate font-semibold outline-none hover:underline focus-visible:underline">{data.source.title}</Link>
             {data.isCrossRepository &&
               <div className="flex gap-1 items-center">

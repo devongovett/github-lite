@@ -61,24 +61,22 @@ fragment IssueCommentFragment on IssueComment {
 export function CommentBody({children}: {children: string}) {
   return (
     <Markdown className="[word-break:break-word]" options={{
+      disableParsingRawHTML: true,
       overrides: {
         img: {props: {style: {maxWidth: '100%'}}},
         pre: {
           props: {
-            className: 'border border-daw-gray-200 rounded p-2 bg-daw-gray-50',
-            style: {
-              whiteSpace: 'pre-wrap'
-            }
+            className: 'border border-daw-gray-200 rounded p-2 bg-daw-gray-50 text-xs my-2 overflow-auto'
           }
         },
         h1: {
-          props: {className: 'text-3xl font-semibold my-3 pb-1 border-b-2 border-daw-gray-200'}
+          props: {className: 'text-2xl font-semibold my-3 pb-1 border-b-2 border-daw-gray-200'}
         },
         h2: {
-          props: {className: 'text-2xl font-semibold my-3'}
+          props: {className: 'text-xl font-semibold my-3'}
         },
         h3: {
-          props: {className: 'text-xl font-semibold my-3'}
+          props: {className: 'text-lg font-semibold my-3'}
         },
         a: {
           component: (props: any) => <Link {...props} className="underline" target="_blank">{props.children}</Link>,
@@ -91,6 +89,20 @@ export function CommentBody({children}: {children: string}) {
               wordBreak: 'break-word'
             }
           }
+        },
+        ul: {
+          props: {className: 'list-disc pl-4'}
+        },
+        ol: {
+          props: {className: 'list-decimal pl-4'}
+        },
+        li: {
+          props: {
+            className: 'my-1'
+          }
+        },
+        blockquote: {
+          props: {className: 'border-l border-l-2 border-daw-gray-300 pl-2'}
         }
       }
     }}>

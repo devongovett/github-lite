@@ -6,6 +6,8 @@ import {
   Button, Checkbox, Dialog, DialogTrigger, Input,
   Popover, Radio, SearchField, Tag, TagGroup, TagList
 } from 'react-aria-components';
+import { PullRequestPage } from './PullRequest';
+import { IssuePage } from './Issue';
 
 export type RepoLabel = RestEndpointMethodTypes["issues"]["listLabelsForRepo"]["response"]["data"][0];
 export type SearchItem = RestEndpointMethodTypes["search"]["issuesAndPullRequests"]["response"]["data"]["items"][0];
@@ -50,6 +52,14 @@ export async function fetchSearchPage([, query, sortBy, sortDir, page]: SearchKe
     page
   });
   const hasNext = page * PER_PAGE < res.data.total_count;
+  for (let item of res.data.items.slice(0, 10)) {
+    let [owner, repo] = item.repository_url.split('/').slice(-2);
+    if (item.pull_request) {
+      PullRequestPage.preload(owner, repo, item.number);
+    } else {
+      IssuePage.preload(owner, repo, item.number);
+    }
+  }
   return {items: res.data.items, hasNext};
 }
 

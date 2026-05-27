@@ -6,6 +6,7 @@ import { DiscussionPage } from './Discussion';
 import { CommitPage } from './Commit';
 import { Route, Routes, useLocation, useParams } from 'react-router-dom';
 import useSWRInfinite from 'swr/infinite';
+import {preload as swrPreload} from 'swr';
 import { useCallback, useEffect } from 'react';
 import { List, ListItem, EmptyDetail } from './List';
 
@@ -32,10 +33,10 @@ async function fetchNotificationsPage([, page]: readonly [string, number]): Prom
 function preloadNotification(item: Notification) {
   switch (item?.subject.type) {
     case 'PullRequest':
-      preload(PullRequestPage.query(), {owner: item.repository.owner.login, repo: item.repository.name, number: Number(item.subject.url.split('/').pop())});
+      PullRequestPage.preload(item.repository.owner.login, item.repository.name, Number(item.subject.url.split('/').pop()));
       break;
     case 'Issue':
-      preload(IssuePage.query(), {owner: item.repository.owner.login, repo: item.repository.name, number: Number(item.subject.url.split('/').pop())});
+      IssuePage.preload(item.repository.owner.login, item.repository.name, Number(item.subject.url.split('/').pop()));
       break;
     case 'Discussion':
       preload(DiscussionPage.query(), {owner: item.repository.owner.login, repo: item.repository.name, number: Number(item.subject.url.split('/').pop())});
@@ -81,6 +82,10 @@ export function NotificationsView() {
     </div>
   );
 }
+
+NotificationsView.preload = () => {
+  swrPreload(getNotificationsKey, fetchNotificationsPage);
+};
 
 function NotificationItem({item}: {item: Notification}) {
   return (

@@ -195,7 +195,7 @@ function IssueListItem({issue, owner, repo}: {issue: SearchItem, owner: string, 
       id={`/${owner}/${repo}/issues/${issue.number}`}
       href={`/${owner}/${repo}/issues/${issue.number}`}
       textValue={issue.title}
-      onHoverStart={() => preload(IssuePage.query(), {owner, repo, number: issue.number})}
+      onHoverStart={() => IssuePage.preload(owner, repo, issue.number)}
       icon={issue.state === 'open'
         ? <IssueOpenedIcon size={14} className="text-green-600 group-aria-selected:text-daw-white" />
         : <IssueClosedIcon size={14} className="text-purple-600 group-aria-selected:text-daw-white" />

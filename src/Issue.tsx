@@ -2,7 +2,7 @@ import { Issue, PullRequest, Repository } from '@octokit/graphql-schema';
 import { ArrowRightIcon } from '@primer/octicons-react';
 import Markdown from 'markdown-to-jsx';
 import { Link } from 'react-aria-components';
-import { useQuery } from './client';
+import { preload, useQuery } from './client';
 import { Timeline } from './Timeline';
 import { CommentCard } from './CommentCard';
 import { Avatar, BranchName, IssueStatus } from './components';
@@ -24,6 +24,10 @@ export function IssuePage({owner, repo, number}: {owner: string, repo: string, n
     </div>
   );
 }
+
+IssuePage.preload = (owner: string, repo: string, number: number) => {
+  preload(IssuePage.query(), {owner, repo, number});
+};
 
 IssuePage.query = () => `
 query IssueTimeline($owner: String!, $repo: String!, $number: Int!) {
@@ -64,6 +68,7 @@ ${Timeline.issueFragment()}
 `;
 
 export function Header({data}: {data: Issue | PullRequest}) {
+  let isPR = data.__typename === 'PullRequest';
   return (
     <div className="flex flex-col gap-2 bg-daw-white rounded-xl p-4 shadow-card">
       <div className="flex gap-2">
@@ -73,12 +78,12 @@ export function Header({data}: {data: Issue | PullRequest}) {
         </div>
         <IssueStatus data={data} />
       </div>
-      <h1 className="text-2xl font-semibold"><Markdown>{data.title}</Markdown></h1>
-      {'headRef' in data && data.headRef && <>
+      <h1 className={`${isPR ? 'text-xl' : 'text-2xl'} font-semibold`}><Markdown>{data.title}</Markdown></h1>
+      {'headRefName' in data && <>
         <div className="flex items-center gap-2">
-          <BranchName>{data.headRef!.name}</BranchName>
+          <BranchName>{data.headRefName}</BranchName>
           <ArrowRightIcon className="text-daw-gray-700" />
-          <BranchName>{data.baseRef!.name}</BranchName>
+          <BranchName>{data.baseRefName}</BranchName>
         </div>
       </>}
     </div>

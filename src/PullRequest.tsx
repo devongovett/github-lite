@@ -5,12 +5,12 @@ import { DiffCodeView } from './DiffCodeView';
 import { PullRequestThread } from './Timeline';
 import type { PullRequestReviewThread } from '@octokit/graphql-schema';
 import { Header } from './Issue';
-import { useQuery, github } from './client';
+import { useQuery, github, preload } from './client';
 import { CommentCard } from './CommentCard';
 import { Timeline } from './Timeline';
 import { IssueCommentForm } from './CommentForm';
 import { Card, Status, User } from './components';
-import useSWR from 'swr';
+import useSWR, {preload as swrPreload} from 'swr';
 
 async function fetchPatch([, owner, repo, number]: ['patch', string, string, number]): Promise<string> {
   let res = await github.request('GET /repos/{owner}/{repo}/pulls/{pull_number}', {
@@ -65,7 +65,7 @@ export function PullRequestPage({owner, repo, number}: {owner: string, repo: str
         </TabPanel>
       </Tabs>*/}
       <div className="flex flex-1 min-h-0">
-        <div className="flex flex-col gap-4 px-4 pb-4 mt-2 -mr-4 max-w-3xl mx-auto w-[500px] overflow-auto text-sm">
+        <div className="flex flex-col gap-4 px-4 pb-4 pt-2 -mr-4 max-w-3xl mx-auto w-[500px] overflow-auto text-sm">
           <Header data={data} />
           <CommentCard data={data} />
           <PullHeader data={data} />
@@ -115,12 +115,8 @@ query issueTimeline($owner: String!, $repo: String!, $number: Int!) {
           avatarUrl
         }
       }
-      headRef {
-        name
-      }
-      baseRef {
-        name
-      }
+      headRefName
+      baseRefName
       reviews(last:100) {
         nodes {
           author {
@@ -181,6 +177,11 @@ query issueTimeline($owner: String!, $repo: String!, $number: Int!) {
 
 ${Timeline.pullRequestFragment()}
 `;
+
+PullRequestPage.preload = (owner: string, repo: string, number: number) => {
+  preload(PullRequestPage.query(), {owner, repo, number});
+  swrPreload(['patch', owner, repo, number] as const, fetchPatch);
+};
 
 type Thread = PullRequestReviewThread;
 

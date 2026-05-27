@@ -200,7 +200,7 @@ function PullListItem({pull, owner, repo}: {pull: SearchItem, owner: string, rep
       id={`/${owner}/${repo}/pulls/${pull.number}`}
       href={`/${owner}/${repo}/pulls/${pull.number}`}
       textValue={pull.title}
-      onHoverStart={() => preload(PullRequestPage.query(), {owner, repo, number: pull.number})}
+      onHoverStart={() => PullRequestPage.preload(owner, repo, pull.number)}
       icon={icon}
       label={pull.title}
       description={`#${pull.number} by ${pull.user?.login}`}
