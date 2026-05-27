@@ -91,7 +91,7 @@ interface CardProps extends DOMAttributes<Element> {
 
 export function Card({children, gridArea, ...otherProps}: CardProps) {
   return (
-    <div className="bg-daw-white border border-daw-gray-200 rounded-lg p-3" style={{gridArea}} {...otherProps}>
+    <div className="bg-daw-white rounded-xl p-3 shadow-card" style={{gridArea}} {...otherProps}>
       {children}
     </div>
   );

@@ -33,7 +33,7 @@ export function App() {
     <RouterProvider navigate={navigate}>
       <div className="flex flex-col h-full">
         <Toolbar />
-        <div className="flex flex-1 overflow-hidden">
+        <div className="flex flex-1 gap-1 overflow-hidden">
           <SourceSelector />
           <Routes>
             <Route path="/notifications/*" element={<NotificationsView />} />
@@ -91,12 +91,12 @@ function Toolbar() {
   }
 
   return (
-    <div className="border-b border-daw-gray-200 px-3 py-2 flex items-center shrink-0">
+    <div className="px-2 pt-2 flex items-center shrink-0">
       <Select
         selectedKey={currentRepo || null}
         onSelectionChange={key => handleRepoChange(key as string)}
         aria-label="Repository">
-        <Button className="flex items-center gap-1.5 text-sm font-medium px-2 py-1.5 rounded-md border border-daw-gray-200 hover:bg-daw-gray-100 cursor-default outline-none focus-visible:ring-2 ring-blue-600">
+        <Button className="flex items-center gap-1.5 text-sm font-medium px-2 py-1.5 rounded-md bg-daw-white border border-daw-gray-200 hover:bg-daw-gray-100 pressed:bg-daw-gray-100 cursor-default outline-none focus-visible:ring-2 ring-blue-600">
           <SelectValue className="max-w-xs truncate flex items-center gap-2" />
         </Button>
         <Popover placement="bottom start" offset={4} className="bg-white dark:bg-neutral-900 border border-daw-gray-200 rounded-lg shadow-xl outline-none w-72 max-h-80 overflow-y-auto">
@@ -123,7 +123,7 @@ function SourceSelector() {
 
   const repoBase = (urlOwner && urlRepo) ? `/${urlOwner}/${urlRepo}` : getStoredRepoUrl();
 
-  const itemClass = "flex flex-col items-center gap-1 py-2 rounded-md cursor-default outline-none hover:bg-daw-gray-100 selected:bg-daw-gray-900 selected:text-daw-white focus-visible:outline-2 outline-blue-600";
+  const itemClass = "flex flex-col items-center gap-1 py-2 rounded-md cursor-default outline-none hover:bg-daw-gray-200 selected:bg-daw-gray-900 selected:text-daw-white focus-visible:outline-2 outline-blue-600";
   const labelClass = "text-[10px] font-medium leading-none";
 
   return (
@@ -135,7 +135,7 @@ function SourceSelector() {
       linkBehavior="selection"
       selectedKeys={[section]}
       disallowEmptySelection
-      className="w-16 border-r border-daw-gray-300 flex flex-col py-2 gap-0.5 items-stretch px-1.5 shrink-0">
+      className="w-16 flex flex-col py-3 gap-0.5 items-stretch px-1.5 shrink-0">
       <ListBoxItem id="notifications" href="/notifications" textValue="Inbox" className={itemClass}>
         <BellIcon size={18} />
         <span className={labelClass}>Inbox</span>

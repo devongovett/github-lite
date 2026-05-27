@@ -65,7 +65,7 @@ ${Timeline.issueFragment()}
 
 export function Header({data}: {data: Issue | PullRequest}) {
   return (
-    <div className="flex flex-col gap-2 mb-2">
+    <div className="flex flex-col gap-2 bg-daw-white rounded-xl p-4 shadow-card">
       <div className="flex gap-2">
         <div className="flex gap-2 items-center">
           <Avatar src={data.repository.owner.avatarUrl} />

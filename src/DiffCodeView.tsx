@@ -37,10 +37,10 @@ export function DiffCodeView({patch, threads = [], renderAnnotation}: {
         theme: { dark: 'pierre-dark', light: 'pierre-light' },
         themeType: 'system',
         stickyHeaders: true,
-        // diffStyle: 'unified',
+        diffStyle: 'unified',
         enableGutterUtility: true
       }}
-      className="h-full overflow-auto"
+      className="h-full overflow-auto px-4"
       renderAnnotation={renderAnnotation}
     />
   );

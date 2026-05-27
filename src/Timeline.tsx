@@ -297,12 +297,12 @@ function Reviewed({data}: {data: PullRequestReview}) {
               <CommentBody>{data.body}</CommentBody>
             </Card>
           }
-          {data.comments.nodes?.map(comment => {
+          {/*{data.comments.nodes?.map(comment => {
             let thread = threadsById.get(comment?.id);
             if (thread) {
               return <PullRequestThread key={thread.id} data={thread} />;
             }
-          })}
+          })}*/}
         </div>
       )}
     </div>

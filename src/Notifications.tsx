@@ -62,7 +62,7 @@ export function NotificationsView() {
   }, [mutate]);
 
   return (
-    <div className="flex flex-1 overflow-hidden">
+    <div className="flex flex-1">
       <List
         aria-label="Notifications"
         items={notifications}

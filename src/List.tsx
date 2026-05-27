@@ -2,14 +2,6 @@ import { Collection, ListBox, ListBoxItem, ListBoxLoadMoreItem, Text } from 'rea
 import { Virtualizer, ListLayout } from 'react-aria-components/Virtualizer';
 import { ReactNode } from 'react';
 
-export function Spinner() {
-  return (
-    <div className="flex justify-center items-center h-12">
-      <div className="w-5 h-5 border-2 border-daw-gray-300 border-t-blue-500 rounded-full animate-spin" />
-    </div>
-  );
-}
-
 export function EmptyDetail({text}: {text: string}) {
   return (
     <div className="flex items-center justify-center h-full text-lg text-neutral-700 dark:text-neutral-300 font-semibold">
@@ -40,29 +32,37 @@ export function List<T extends object>({
   header
 }: ListProps<T>) {
   return (
-    <div className="w-[280px] border-r border-daw-gray-300 shrink-0 flex flex-col">
+    <div className="w-[280px] shrink-0 flex flex-col bg-daw-white rounded-xl shadow-card my-2">
       {header}
       <div className="flex-1 overflow-hidden">
-      <Virtualizer layout={ListLayout} layoutOptions={{estimatedRowSize: 56, padding: 8, gap: 4}}>
-        <ListBox
-          aria-label={ariaLabel}
-          selectionMode="single"
-          selectionBehavior="replace"
-          // @ts-ignore
-          linkBehavior="selection"
-          selectedKeys={selectedKeys}
-          disallowEmptySelection
-          className="h-full overflow-auto"
-          style={{display: 'block', padding: 0}}
-          renderEmptyState={() => isLoading && <Spinner />}>
-          <Collection items={items}>
-            {children}
-          </Collection>
-          <ListBoxLoadMoreItem isLoading={isLoadingMore} onLoadMore={onLoadMore}>
-            <Spinner />
-          </ListBoxLoadMoreItem>
-        </ListBox>
-      </Virtualizer>
+        <Virtualizer layout={ListLayout} layoutOptions={{estimatedRowSize: 56, padding: 8, gap: 4}}>
+          <ListBox
+            aria-label={ariaLabel}
+            selectionMode="single"
+            selectionBehavior="replace"
+            // @ts-ignore
+            linkBehavior="selection"
+            selectedKeys={selectedKeys}
+            disallowEmptySelection
+            className="h-full overflow-auto"
+            style={{display: 'block', padding: 0}}
+            renderEmptyState={() => isLoading && (
+              <div className="flex justify-center items-center h-full">
+                <div className="w-5 h-5 border-2 border-daw-gray-300 border-t-blue-500 rounded-full animate-spin" />
+              </div>
+            )}>
+            <Collection items={items}>
+              {children}
+            </Collection>
+            {!isLoading && (
+              <ListBoxLoadMoreItem isLoading={isLoadingMore} onLoadMore={onLoadMore}>
+                <div className="flex justify-center items-center h-12">
+                  <div className="w-5 h-5 border-2 border-daw-gray-300 border-t-blue-500 rounded-full animate-spin" />
+                </div>
+              </ListBoxLoadMoreItem>
+            )}
+          </ListBox>
+        </Virtualizer>
       </div>
     </div>
   );

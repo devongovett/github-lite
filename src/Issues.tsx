@@ -86,7 +86,7 @@ export function IssuesView() {
   );
 
   return (
-    <div className="flex flex-1 overflow-hidden">
+    <div className="flex flex-1">
       <List
         aria-label={`Issues — ${owner}/${repo}`}
         items={issues}

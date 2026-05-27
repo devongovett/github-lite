@@ -87,7 +87,7 @@ export function PullsView() {
   );
 
   return (
-    <div className="flex flex-1 overflow-hidden">
+    <div className="flex flex-1">
       <List
         aria-label={`Pull Requests — ${owner}/${repo}`}
         items={pulls}

@@ -38,10 +38,10 @@ export function PullRequestPage({owner, repo, number}: {owner: string, repo: str
 
   return (
     <PullRequestContext.Provider value={data}>
-      <div className="flex flex-col gap-4 my-4 w-full max-w-3xl mx-auto">
+      {/*<div className="flex flex-col gap-4 my-4 w-full max-w-3xl mx-auto">
         <Header data={data} />
-      </div>
-      <Tabs className="flex flex-col my-4 flex-1 min-h-0">
+      </div>*/}
+      {/*<Tabs className="flex flex-col my-4 flex-1 min-h-0">
         <TabList aria-label="Pull request tabs" className="flex gap-1 max-w-3xl mx-auto w-full">
           <Tab id="overview" className="px-4 py-2 text-sm font-medium cursor-default outline-none rounded-t-md selected:border-b-2 selected:border-blue-600 selected:text-blue-600 hover:bg-daw-gray-100 focus-visible:ring-2 ring-blue-600">
             Overview
@@ -63,7 +63,22 @@ export function PullRequestPage({owner, repo, number}: {owner: string, repo: str
             : <div className="text-sm text-daw-gray-500 py-4 max-w-3xl mx-auto w-full">Loading diff…</div>
           }
         </TabPanel>
-      </Tabs>
+      </Tabs>*/}
+      <div className="flex flex-1 min-h-0">
+        <div className="flex flex-col gap-4 px-4 pb-4 mt-2 -mr-4 max-w-3xl mx-auto w-[500px] overflow-auto text-sm">
+          <Header data={data} />
+          <CommentCard data={data} />
+          <PullHeader data={data} />
+          <Timeline items={data.timelineItems.nodes!} />
+          <IssueCommentForm issue={data} />
+        </div>
+        <div className="flex-1">
+          {patch
+            ? <DiffCodeView patch={patch} threads={(data.reviewThreads.nodes ?? []) as Thread[]} renderAnnotation={annotation => <div className="font-sans text-base mx-2"><PullRequestThread data={annotation.metadata} /></div>} />
+            : <div className="text-sm text-daw-gray-500 py-4 max-w-3xl mx-auto w-full">Loading diff…</div>
+          }
+        </div>
+      </div>
     </PullRequestContext.Provider>
   );
 }

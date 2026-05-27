@@ -31,7 +31,6 @@ export function CommitPage({owner, repo, sha}: {owner: string, repo: string, sha
   return (
     <div className="flex flex-col h-full">
       <CommitHeader commit={commit} owner={owner} repo={repo} />
-      <div className="border-b border-daw-gray-200 mx-2 shrink-0" />
       <div className="flex-1 min-h-0">
         {patch
           ? <DiffCodeView patch={patch} />
@@ -56,7 +55,7 @@ function CommitHeader({commit, owner, repo}: {commit: CommitData, owner: string,
   let avatarUrl = commit.author?.avatar_url ?? '';
 
   return (
-    <div className="flex flex-col gap-2 my-4 mx-2 w-full shrink-0">
+    <div className="flex flex-col gap-2 my-2 mx-4 shrink-0 bg-daw-white rounded-xl p-4 shadow-card">
       <div className="flex gap-2 items-center">
         <Avatar src={avatarUrl} />
         <span className="text-daw-gray-700">{owner}/{repo}</span>
@@ -64,7 +63,7 @@ function CommitHeader({commit, owner, repo}: {commit: CommitData, owner: string,
           {commit.sha.slice(0, 7)}
         </Link>
       </div>
-      <h1 className="text-2xl font-semibold">{title}</h1>
+      <h1 className="text-xl font-semibold">{title}</h1>
       {body && <CommitBody body={body} />}
       <div className="flex items-center gap-2 text-sm text-daw-gray-600">
         <Avatar src={avatarUrl} size="s" />
