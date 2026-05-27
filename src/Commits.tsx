@@ -10,8 +10,6 @@ import { github } from './client';
 import { CommitPage } from './Commit';
 import { List, ListItem, EmptyDetail } from './List';
 
-const OWNER = 'adobe';
-const REPO = 'react-spectrum';
 const PER_PAGE = 30;
 
 type RawCommit = RestEndpointMethodTypes['repos']['listCommits']['response']['data'][0];
@@ -36,18 +34,19 @@ async function fetchCommitsPage([, owner, repo, branch, page]: readonly ['commit
 }
 
 export function CommitsView() {
+  const {owner = '', repo = ''} = useParams<{owner: string, repo: string}>();
   const [branch, setBranch] = useState<string | null>(null);
   const {pathname} = useLocation();
 
-  const {data: repoInfo} = useSWR(['repo-info', OWNER, REPO] as const, fetchRepoInfo);
-  const {data: branches} = useSWR(['branches', OWNER, REPO] as const, fetchBranches);
+  const {data: repoInfo} = useSWR(['repo-info', owner, repo] as const, fetchRepoInfo);
+  const {data: branches} = useSWR(['branches', owner, repo] as const, fetchBranches);
 
   const effectiveBranch = branch ?? repoInfo?.default_branch ?? 'main';
 
   const getKey = useCallback((pageIndex: number, prev: CommitPageResult | null) => {
     if (prev && !prev.hasNext) return null;
-    return ['commits', OWNER, REPO, effectiveBranch, pageIndex + 1] as const;
-  }, [effectiveBranch]);
+    return ['commits', owner, repo, effectiveBranch, pageIndex + 1] as const;
+  }, [owner, repo, effectiveBranch]);
 
   const {data, size, setSize, isLoading, isValidating, error} = useSWRInfinite(getKey, fetchCommitsPage);
 
@@ -63,14 +62,14 @@ export function CommitsView() {
   return (
     <div className="flex flex-1 overflow-hidden">
       <List
-        aria-label={`Commits — ${OWNER}/${REPO}`}
+        aria-label={`Commits — ${owner}/${repo}`}
         items={commits}
         selectedKeys={[pathname]}
         isLoading={isLoading}
         isLoadingMore={isLoadingMore}
         header={header}
         onLoadMore={() => { if (!isLoading && !isValidating && !error) setSize(size + 1); }}>
-        {commit => <CommitListItem commit={commit} />}
+        {commit => <CommitListItem commit={commit} owner={owner} repo={repo} />}
       </List>
       <div className="flex-1 overflow-auto flex flex-col">
         <Routes>
@@ -109,7 +108,7 @@ function BranchSelector({branches, value, onChange}: {
   );
 }
 
-function CommitListItem({commit}: {commit: CommitItem}) {
+function CommitListItem({commit, owner, repo}: {commit: CommitItem, owner: string, repo: string}) {
   let df = useDateFormatter({month: 'short', day: 'numeric', year: 'numeric'});
   let title = commit.commit.message.split('\n')[0];
   let author = commit.author?.login ?? commit.commit.author?.name ?? 'Unknown';
@@ -117,10 +116,10 @@ function CommitListItem({commit}: {commit: CommitItem}) {
 
   return (
     <ListItem
-      id={`/commits/${commit.sha}`}
-      href={`/commits/${commit.sha}`}
+      id={`/${owner}/${repo}/commits/${commit.sha}`}
+      href={`/${owner}/${repo}/commits/${commit.sha}`}
       textValue={title}
-      onHoverStart={() => CommitPage.preload(OWNER, REPO, commit.sha)}
+      onHoverStart={() => CommitPage.preload(owner, repo, commit.sha)}
       icon={<GitCommitIcon size={14} className="text-daw-gray-500 group-aria-selected:text-daw-white" />}
       label={title}
       description={`${author} · ${date}`}
@@ -129,6 +128,6 @@ function CommitListItem({commit}: {commit: CommitItem}) {
 }
 
 function CommitRouteElement() {
-  let {sha} = useParams<{sha: string}>();
-  return <CommitPage key={sha} owner={OWNER} repo={REPO} sha={sha!} />;
+  let {owner, repo, sha} = useParams<{owner: string, repo: string, sha: string}>();
+  return <CommitPage key={sha} owner={owner!} repo={repo!} sha={sha!} />;
 }

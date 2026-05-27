@@ -9,9 +9,6 @@ import { List, ListItem, EmptyDetail } from './List';
 import { Button, Input, RadioGroup, TextField } from 'react-aria-components';
 import { FilterSection, RadioItem, SearchBar, FilterPopoverWrapper, SORT_OPTIONS } from './Filters';
 
-const OWNER = 'adobe';
-const REPO = 'react-spectrum';
-
 type DiscussionItem = {
   id: string;
   number: number;
@@ -84,6 +81,7 @@ function buildDiscussionQuery(owner: string, repo: string, search: string, autho
 }
 
 export function DiscussionsView() {
+  const {owner = '', repo = ''} = useParams<{owner: string, repo: string}>();
   const [searchInput, setSearchInput] = useState('');
   const [search, setSearch] = useState('');
   const [status, setStatus] = useState('open');
@@ -105,11 +103,11 @@ export function DiscussionsView() {
 
   const {pathname} = useLocation();
   const {data: categories} = useSWR(
-    ['discussion-categories', OWNER, REPO] as const,
+    ['discussion-categories', owner, repo] as const,
     fetchCategories
   );
 
-  const query = buildDiscussionQuery(OWNER, REPO, search, author, status, answered, category, sort);
+  const query = buildDiscussionQuery(owner, repo, search, author, status, answered, category, sort);
 
   const getKey = useCallback((pageIndex: number, prev: DiscussionPageResult | null): DiscussionKey | null => {
     if (prev && !prev.pageInfo.hasNextPage) return null;
@@ -150,14 +148,14 @@ export function DiscussionsView() {
   return (
     <div className="flex flex-1 overflow-hidden">
       <List
-        aria-label={`Discussions — ${OWNER}/${REPO}`}
+        aria-label={`Discussions — ${owner}/${repo}`}
         items={discussions}
         selectedKeys={[pathname]}
         isLoading={isLoading}
         isLoadingMore={isLoadingMore}
         header={header}
         onLoadMore={() => { if (!isLoading && !isValidating && !error) setSize(size + 1); }}>
-        {discussion => <DiscussionListItem discussion={discussion} />}
+        {discussion => <DiscussionListItem discussion={discussion} owner={owner} repo={repo} />}
       </List>
       <div className="flex-1 overflow-auto flex flex-col">
         <Routes>
@@ -250,7 +248,7 @@ function DiscussionFilterPopover({
 
 // --- List items ---
 
-function DiscussionListItem({discussion}: {discussion: DiscussionItem}) {
+function DiscussionListItem({discussion, owner, repo}: {discussion: DiscussionItem, owner: string, repo: string}) {
   let icon;
   if (discussion.answerChosenAt) {
     icon = <CheckCircleIcon size={14} className="text-purple-600 group-aria-selected:text-daw-white" />;
@@ -262,10 +260,10 @@ function DiscussionListItem({discussion}: {discussion: DiscussionItem}) {
 
   return (
     <ListItem
-      id={`/discussions/${discussion.number}`}
-      href={`/discussions/${discussion.number}`}
+      id={`/${owner}/${repo}/discussions/${discussion.number}`}
+      href={`/${owner}/${repo}/discussions/${discussion.number}`}
       textValue={discussion.title}
-      onHoverStart={() => preload(DiscussionPage.query(), {owner: OWNER, repo: REPO, number: discussion.number})}
+      onHoverStart={() => preload(DiscussionPage.query(), {owner, repo, number: discussion.number})}
       icon={icon}
       label={`${discussion.category.emoji} ${discussion.title}`}
       description={`#${discussion.number} by ${discussion.author?.login}`}
@@ -274,6 +272,6 @@ function DiscussionListItem({discussion}: {discussion: DiscussionItem}) {
 }
 
 function DiscussionRouteElement() {
-  let {number} = useParams<{number: string}>();
-  return <DiscussionPage key={number} owner={OWNER} repo={REPO} number={Number(number!)} />;
+  let {owner = '', repo = '', number} = useParams<{owner: string, repo: string, number: string}>();
+  return <DiscussionPage key={number} owner={owner} repo={repo} number={Number(number)} />;
 }

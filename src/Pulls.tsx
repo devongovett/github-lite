@@ -16,9 +16,6 @@ import {
 
 type PullPageResult = SearchPageResult;
 
-const OWNER = 'adobe';
-const REPO = 'react-spectrum';
-
 const STATUS_OPTIONS = [
   { value: 'open', label: 'Open' },
   { value: 'closed', label: 'Closed' },
@@ -27,6 +24,7 @@ const STATUS_OPTIONS = [
 ];
 
 export function PullsView() {
+  let {owner = '', repo = ''} = useParams<{owner: string, repo: string}>();
   const [searchInput, setSearchInput] = useState('');
   const [search, setSearch] = useState('');
   const [status, setStatus] = useState('open');
@@ -47,15 +45,15 @@ export function PullsView() {
   }, [authorInput]);
 
   const {pathname} = useLocation();
-  const {data: availableLabels} = useSWR(['labels', OWNER, REPO] as const, fetchLabels);
+  const {data: availableLabels} = useSWR(['labels', owner, repo] as const, fetchLabels);
 
   const getKey = useCallback((pageIndex: number, prev: PullPageResult | null) => {
     if (prev && !prev.hasNext) return null;
     const [sortBy, sortDir] = sort.split('-') as [string, string];
     const extra = draft ? ['is:draft'] : [];
-    const query = buildSearchQuery('pr', OWNER, REPO, search, author, status, selectedLabels, extra);
+    const query = buildSearchQuery('pr', owner, repo, search, author, status, selectedLabels, extra);
     return ['pulls', query, sortBy, sortDir, pageIndex + 1] as SearchKey;
-  }, [status, draft, selectedLabels, sort, search, author]);
+  }, [owner, repo, status, draft, selectedLabels, sort, search, author]);
 
   const {data, size, setSize, isLoading, isValidating, error} = useSWRInfinite(getKey, fetchSearchPage);
 
@@ -91,14 +89,14 @@ export function PullsView() {
   return (
     <div className="flex flex-1 overflow-hidden">
       <List
-        aria-label={`Pull Requests — ${OWNER}/${REPO}`}
+        aria-label={`Pull Requests — ${owner}/${repo}`}
         items={pulls}
         selectedKeys={[pathname]}
         isLoading={isLoading}
         isLoadingMore={isLoadingMore}
         header={header}
         onLoadMore={() => { if (!isLoading && !isValidating && !error) setSize(size + 1); }}>
-        {pull => <PullListItem pull={pull} />}
+        {pull => <PullListItem pull={pull} owner={owner} repo={repo} />}
       </List>
       <div className="flex-1 overflow-auto flex flex-col">
         <Routes>
@@ -182,7 +180,7 @@ function PullFilterPopover({
 
 // --- List items ---
 
-function PullListItem({pull}: {pull: SearchItem}) {
+function PullListItem({pull, owner, repo}: {pull: SearchItem, owner: string, repo: string}) {
   const isMerged = !!pull.pull_request?.merged_at;
   const isDraft = !!pull.draft;
 
@@ -199,10 +197,10 @@ function PullListItem({pull}: {pull: SearchItem}) {
 
   return (
     <ListItem
-      id={`/pulls/${pull.number}`}
-      href={`/pulls/${pull.number}`}
+      id={`/${owner}/${repo}/pulls/${pull.number}`}
+      href={`/${owner}/${repo}/pulls/${pull.number}`}
       textValue={pull.title}
-      onHoverStart={() => preload(PullRequestPage.query(), {owner: OWNER, repo: REPO, number: pull.number})}
+      onHoverStart={() => preload(PullRequestPage.query(), {owner, repo, number: pull.number})}
       icon={icon}
       label={pull.title}
       description={`#${pull.number} by ${pull.user?.login}`}
@@ -211,6 +209,6 @@ function PullListItem({pull}: {pull: SearchItem}) {
 }
 
 function PullRouteElement() {
-  let {number} = useParams<{number: string}>();
-  return <PullRequestPage key={number} owner={OWNER} repo={REPO} number={Number(number!)} />;
+  let {owner = '', repo = '', number} = useParams<{owner: string, repo: string, number: string}>();
+  return <PullRequestPage key={number} owner={owner} repo={repo} number={Number(number)} />;
 }

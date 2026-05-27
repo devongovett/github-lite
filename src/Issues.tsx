@@ -16,11 +16,10 @@ import {
 
 type IssuePageResult = SearchPageResult;
 
-const OWNER = 'adobe';
-const REPO = 'react-spectrum';
 const TYPE_LABEL_NAMES = ['bug', 'enhancement', 'feature', 'feature request', 'question', 'documentation'];
 
 export function IssuesView() {
+  let {owner = '', repo = ''} = useParams<{owner: string, repo: string}>();
   const [searchInput, setSearchInput] = useState('');
   const [search, setSearch] = useState('');
   const [status, setStatus] = useState('open');
@@ -41,15 +40,15 @@ export function IssuesView() {
   }, [authorInput]);
 
   const {pathname} = useLocation();
-  const {data: availableLabels} = useSWR(['labels', OWNER, REPO] as const, fetchLabels);
+  const {data: availableLabels} = useSWR(['labels', owner, repo] as const, fetchLabels);
 
   const getKey = useCallback((pageIndex: number, prev: IssuePageResult | null) => {
     if (prev && !prev.hasNext) return null;
     const [sortBy, sortDir] = sort.split('-') as [string, string];
     const labels = [...selectedLabels, ...(issueType ? [issueType] : [])];
-    const query = buildSearchQuery('issue', OWNER, REPO, search, author, status, labels);
+    const query = buildSearchQuery('issue', owner, repo, search, author, status, labels);
     return ['issues', query, sortBy, sortDir, pageIndex + 1] as SearchKey;
-  }, [status, selectedLabels, issueType, sort, search, author]);
+  }, [owner, repo, status, selectedLabels, issueType, sort, search, author]);
 
   const {data, size, setSize, isLoading, isValidating, error} = useSWRInfinite(getKey, fetchSearchPage);
 
@@ -89,14 +88,14 @@ export function IssuesView() {
   return (
     <div className="flex flex-1 overflow-hidden">
       <List
-        aria-label={`Issues — ${OWNER}/${REPO}`}
+        aria-label={`Issues — ${owner}/${repo}`}
         items={issues}
         selectedKeys={[pathname]}
         isLoading={isLoading}
         isLoadingMore={isLoadingMore}
         header={header}
         onLoadMore={() => { if (!isLoading && !isValidating && !error) setSize(size + 1); }}>
-        {issue => <IssueListItem issue={issue} />}
+        {issue => <IssueListItem issue={issue} owner={owner} repo={repo} />}
       </List>
       <div className="flex-1 overflow-auto flex flex-col">
         <Routes>
@@ -190,13 +189,13 @@ function IssueFilterPopover({
 
 // --- List items ---
 
-function IssueListItem({issue}: {issue: SearchItem}) {
+function IssueListItem({issue, owner, repo}: {issue: SearchItem, owner: string, repo: string}) {
   return (
     <ListItem
-      id={`/issues/${issue.number}`}
-      href={`/issues/${issue.number}`}
+      id={`/${owner}/${repo}/issues/${issue.number}`}
+      href={`/${owner}/${repo}/issues/${issue.number}`}
       textValue={issue.title}
-      onHoverStart={() => preload(IssuePage.query(), {owner: OWNER, repo: REPO, number: issue.number})}
+      onHoverStart={() => preload(IssuePage.query(), {owner, repo, number: issue.number})}
       icon={issue.state === 'open'
         ? <IssueOpenedIcon size={14} className="text-green-600 group-aria-selected:text-daw-white" />
         : <IssueClosedIcon size={14} className="text-purple-600 group-aria-selected:text-daw-white" />
@@ -208,6 +207,6 @@ function IssueListItem({issue}: {issue: SearchItem}) {
 }
 
 function IssueRouteElement() {
-  let {number} = useParams<{number: string}>();
-  return <IssuePage key={number} owner={OWNER} repo={REPO} number={Number(number!)} />;
+  let {owner = '', repo = '', number} = useParams<{owner: string, repo: string, number: string}>();
+  return <IssuePage key={number} owner={owner} repo={repo} number={Number(number)} />;
 }
