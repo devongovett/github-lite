@@ -13,43 +13,43 @@ export function Timeline({items}: {items: (IssueTimelineItems | PullRequestTimel
     {items.map((item, i) => {
       switch (item?.__typename) {
         case 'IssueComment':
-          return <CommentCard key={item.id} data={item} />;
+          return <CommentCard key={i} data={item} />;
         case 'AutomaticBaseChangeSucceededEvent':
-          return <BaseChanged key={item.id} data={item} />;
+          return <BaseChanged key={i} data={item} />;
         case 'PullRequestCommit':
-          return <Committed key={item.id} data={item} />;
+          return <Committed key={i} data={item} />;
         case 'HeadRefForcePushedEvent':
-          return <ForcePushed key={item.id} data={item} />;
+          return <ForcePushed key={i} data={item} />;
         case 'PullRequestReview':
-          return <Reviewed key={item.id} data={item} />;
+          return <Reviewed key={i} data={item} />;
         case 'ReviewDismissedEvent':
-          return <ReviewDismissed key={item.id} data={item} />;
+          return <ReviewDismissed key={i} data={item} />;
         case 'RenamedTitleEvent':
-          return <Renamed key={item.id} data={item} />;
+          return <Renamed key={i} data={item} />;
         case 'LabeledEvent':
-          return <Labeled key={item.id} data={item} />;
+          return <Labeled key={i} data={item} />;
         case 'UnlabeledEvent':
-          return <Unlabeled key={item.id} data={item} />;
+          return <Unlabeled key={i} data={item} />;
         case 'ClosedEvent':
-          return <Closed key={item.id} data={item} />;
+          return <Closed key={i} data={item} />;
         case 'ReopenedEvent':
-          return <Reopened key={item.id} data={item} />;
+          return <Reopened key={i} data={item} />;
         case 'MergedEvent':
-          return <Merged key={item.id} data={item} />;
+          return <Merged key={i} data={item} />;
         case 'HeadRefDeletedEvent':
-          return <BranchDeleted key={item.id} data={item} />;
+          return <BranchDeleted key={i} data={item} />;
         case 'CrossReferencedEvent':
-          return <CrossReferenced key={item.id} data={item} />;
+          return <CrossReferenced key={i} data={item} />;
         case 'ReferencedEvent':
-          return <Referenced key={item.id} data={item} />;
+          return <Referenced key={i} data={item} />;
         case 'ReviewRequestedEvent':
-          return <ReviewRequested key={item.id} data={item} />;
+          return <ReviewRequested key={i} data={item} />;
         case 'ConvertToDraftEvent':
-          return <ConvertToDraft key={item.id} data={item} />;
+          return <ConvertToDraft key={i} data={item} />;
         case 'ReadyForReviewEvent':
-          return <ReadyForReview key={item.id} data={item} />;
+          return <ReadyForReview key={i} data={item} />;
         case 'CommentDeletedEvent':
-          return <CommentDeleted key={item.id} data={item} />;
+          return <CommentDeleted key={i} data={item} />;
         case 'MentionedEvent':
         case 'SubscribedEvent':
           return null;

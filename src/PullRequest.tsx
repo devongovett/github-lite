@@ -221,6 +221,7 @@ query issueTimeline($owner: String!, $repo: String!, $number: Int!) {
       }
       repository {
         name
+        viewerDefaultMergeMethod
         owner {
           login
           avatarUrl
@@ -430,31 +431,61 @@ function Checks({data}: {data: PullRequest}) {
   );
 }
 
-function Merge({data}: {data: PullRequest}) {
+function Merge({ data }: { data: PullRequest }) {
+  let [isMerging, setMerging] = useState(false);
+
+  async function handleMerge() {
+    setMerging(true);
+    try {
+      await github.pulls.merge({
+        owner: data.repository.owner.login,
+        repo: data.repository.name,
+        pull_number: data.number,
+        merge_method: data.repository.viewerDefaultMergeMethod.toLowerCase() as any,
+      });
+      await mutate([PullRequestPage.query(), { owner: data.repository.owner.login, repo: data.repository.name, number: data.number }]);
+    } finally {
+      setMerging(false);
+    }
+  }
+
+  let [isUpdating, setUpdating] = useState(false);
+
+  async function handleUpdateBranch() {
+    setUpdating(true);
+    try {
+      await github.pulls.updateBranch({
+        owner: data.repository.owner.login,
+        repo: data.repository.name,
+        pull_number: data.number,
+      });
+      await mutate([PullRequestPage.query(), { owner: data.repository.owner.login, repo: data.repository.name, number: data.number }]);
+    } finally {
+      setUpdating(false);
+    }
+  }
+
   if (data.mergeable !== 'MERGEABLE') {
     return (
       <div className="flex gap-2 items-center justify-space-between">
         <p className="text-xs text-daw-gray-600 text-balance flex-1">Conflicts must be resolved before merging.</p>
         {data.viewerCanUpdateBranch &&
-          <Button className="shrink-0 px-4 py-2 rounded-md bg-neutral-600 pressed:bg-neutral-700 border border-neutral-500 pressed:border-neutral-600 text-white cursor-default outline-none focus-visible:ring-2 ring-offset-2 ring-blue-600">Update branch</Button>
+          <Button isPending={isUpdating} onPress={handleUpdateBranch} className="shrink-0 px-4 py-2 rounded-md bg-neutral-600 pressed:bg-neutral-700 border border-neutral-500 pressed:border-neutral-600 pending:opacity-50 transition text-white cursor-default outline-none focus-visible:ring-2 ring-offset-2 ring-blue-600">Update branch</Button>
         }
       </div>
     );
   }
 
-  if (data.reviewDecision === 'APPROVED') {
-    return (
-      <div className="flex gap-2 justify-end">
-        <Button className="px-4 py-2 rounded-md bg-green-600 pressed:bg-green-700 border border-green-700 pressed:border-green-800 dark:border-green-500 dark:pressed:border-green-600 text-white cursor-default outline-none focus-visible:ring-2 ring-offset-2 ring-blue-600">Merge</Button>
-      </div>
-    );
-  }
+  let mergeColor = data.reviewDecision === 'APPROVED' ? 'bg-green-600 pressed:bg-green-700 border-green-700 pressed:border-green-800 dark:border-green-500 dark:pressed:border-green-600' : 'bg-red-600 pressed:bg-red-700 border-red-500 pressed:border-red-600';
+  let mergeLabel = data.reviewDecision === 'APPROVED' ? 'Merge' : 'Merge as administrator';
 
-  if (data.viewerCanMergeAsAdmin) {
+  if (data.reviewDecision === 'APPROVED' || data.viewerCanMergeAsAdmin) {
     return (
-      <div className="flex gap-2 items-center justify-space-between">
-        <p className="text-xs text-daw-gray-600 text-balance">Use your administrator privileges to merge this pull request immediately without waiting for requirements to be met.</p>
-        <Button className="shrink-0 px-4 py-2 rounded-md bg-red-600 pressed:bg-red-700 border border-red-500 pressed:border-red-600 text-white cursor-default outline-none focus-visible:ring-2 ring-offset-2 ring-blue-600">Merge as administrator</Button>
+      <div className="flex gap-2 items-center justify-end flex-wrap">
+        {data.viewerCanMergeAsAdmin && data.reviewDecision !== 'APPROVED' &&
+          <p className="text-xs text-daw-gray-600 text-balance flex-1">Use your administrator privileges to merge this pull request immediately without waiting for requirements to be met.</p>
+        }
+        <Button isPending={isMerging} onPress={handleMerge} className={`shrink-0 px-4 py-2 rounded-md border pending:opacity-50 transition text-white cursor-default outline-none focus-visible:ring-2 ring-offset-2 ring-blue-600 ${mergeColor}`}>{mergeLabel}</Button>
       </div>
     );
   }
