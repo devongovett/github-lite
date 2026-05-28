@@ -73,7 +73,10 @@ function CommitHeader({commit, owner, repo}: {commit: CommitData, owner: string,
           <span>{df.format(new Date(date))}</span>
         </>}
         <span>·</span>
-        <span className="text-daw-gray-500">{commit.stats?.additions ?? 0} additions, {commit.stats?.deletions ?? 0} deletions</span>
+        <span className="text-daw-gray-500 font-medium">
+          <span className="text-red-500">-{commit.stats?.deletions}</span>
+          <span className="ml-1 text-green-600">+{commit.stats?.additions}</span>
+        </span>
       </div>
     </div>
   );

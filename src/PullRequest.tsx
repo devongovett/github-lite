@@ -141,7 +141,11 @@ export function PullRequestPage({owner, repo, number}: {owner: string, repo: str
         <div className="flex flex-col flex-1 gap-2 pt-2 min-h-0">
           {data.state === 'OPEN' && (
             <div className="flex items-center gap-2 mx-4 bg-daw-white rounded-xl p-3 shadow-card shrink-0 text-sm">
-              <span className="text-daw-gray-600 mr-auto font-medium">Review changes</span>
+              <div className="flex items-center mr-auto text-sm font-medium">
+                <span className="ml-1 text-daw-gray-600">{data.changedFiles} {data.changedFiles === 1 ? 'file' : 'files'}</span>
+                <span className="ml-3 text-red-500">-{data.deletions}</span>
+                <span className="ml-1 text-green-600">+{data.additions}</span>
+              </div>
               <Button
                 isDisabled={!hasPendingReview}
                 onPress={() => handleSubmitReview('COMMENT')}
@@ -269,6 +273,9 @@ query issueTimeline($owner: String!, $repo: String!, $number: Int!) {
           }
         }
       }
+      additions
+      deletions
+      changedFiles
       mergeable
       reviewDecision
       viewerCanMergeAsAdmin
