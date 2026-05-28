@@ -4,9 +4,17 @@ import { PullRequestPage } from "./PullRequest";
 import { github } from "./client";
 import { mutate } from 'swr';
 import { Button, Label, TextArea, TextField } from "react-aria-components";
-import { FormEvent, ReactNode, useState } from "react";
+import { FormEvent, ReactNode, Ref, useRef, useState } from "react";
 
 export function IssueCommentForm({issue}: {issue: Issue | PullRequest}) {
+  let formRef = useRef<HTMLFormElement>(null);
+  let [isClosing, setClosing] = useState(false);
+
+  let key = [
+    issue.__typename === 'Issue' ? IssuePage.query() : PullRequestPage.query(),
+    { owner: issue.repository.owner.login, repo: issue.repository.name, number: issue.number }
+  ] as const;
+
   let onSubmit = async (comment: string) => {
     await github.issues.createComment({
       owner: issue.repository.owner.login,
@@ -14,25 +22,44 @@ export function IssueCommentForm({issue}: {issue: Issue | PullRequest}) {
       issue_number: issue.number,
       body: comment
     });
-
-    mutate([
-      issue.__typename === 'Issue' ? IssuePage.query() : PullRequestPage.query(),
-      {
-        owner: issue.repository.owner.login,
-        repo: issue.repository.name,
-        number: issue.number
-      }
-    ]);
+    await mutate(key);
   };
 
+  async function handleClose() {
+    setClosing(true);
+    try {
+      let comment = formRef.current ? (new FormData(formRef.current).get('comment') as string) : '';
+      if (comment) {
+        await github.issues.createComment({
+          owner: issue.repository.owner.login,
+          repo: issue.repository.name,
+          issue_number: issue.number,
+          body: comment
+        });
+      }
+      await github.issues.update({
+        owner: issue.repository.owner.login,
+        repo: issue.repository.name,
+        issue_number: issue.number,
+        state: 'closed'
+      });
+      formRef.current?.reset();
+      await mutate(key);
+    } finally {
+      setClosing(false);
+    }
+  }
+
   return (
-    <CommentForm onSubmit={onSubmit}>
-      {issue.viewerCanClose && issue.state === 'OPEN' && <Button className="px-4 py-2 rounded-md bg-purple-500 pressed:bg-purple-600 border border-purple-400 pressed:border-purple-500 text-white text-sm font-medium cursor-default outline-none focus-visible:ring-2 ring-offset-2 ring-blue-600">Close</Button>}
+    <CommentForm formRef={formRef} onSubmit={onSubmit}>
+      {issue.viewerCanClose && issue.state === 'OPEN' && (
+        <Button type="button" isPending={isClosing} onPress={handleClose} className="px-4 py-2 rounded-md bg-purple-500 pressed:bg-purple-600 border border-purple-400 pressed:border-purple-500 pending:opacity-50 transition text-white text-sm font-medium cursor-default outline-none focus-visible:ring-2 ring-offset-2 ring-blue-600">Close</Button>
+      )}
     </CommentForm>
   );
 }
 
-export function CommentForm({children, className, autoFocus, onSubmit, onCancel}: {children?: ReactNode, className?: string, autoFocus?: boolean, onSubmit?: (comment: string) => Promise<void>, onCancel?: () => void}) {
+export function CommentForm({children, className, autoFocus, onSubmit, onCancel, formRef}: {children?: ReactNode, className?: string, autoFocus?: boolean, onSubmit?: (comment: string) => Promise<void>, onCancel?: () => void, formRef?: Ref<HTMLFormElement>}) {
   let [isPending, setPending] = useState(false);
   let handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -50,7 +77,7 @@ export function CommentForm({children, className, autoFocus, onSubmit, onCancel}
   };
 
   return (
-    <form className={`flex flex-col gap-2 items-end ${className}`} onSubmit={handleSubmit}>
+    <form ref={formRef} className={`flex flex-col gap-2 items-end ${className}`} onSubmit={handleSubmit}>
       <TextField name="comment" className="flex flex-col gap-1 w-full" autoFocus={autoFocus}>
         <Label className="text-xs">Comment</Label>
         <TextArea className="w-full bg-daw-gray-50 border border-daw-gray-400 rounded outline-none focus:ring-1 focus:border-blue-600 ring-blue-600 p-2" rows={4} />
