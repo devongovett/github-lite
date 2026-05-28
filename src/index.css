@@ -29,8 +29,11 @@
   --daw-green-200: var(--color-green-200);
   --daw-green-500: var(--color-green-500);
   --daw-green-700: var(--color-green-700);
+  --daw-yellow-100: var(--color-yellow-100);
+  --daw-yellow-200: var(--color-yellow-200);
   --daw-yellow-500: var(--color-yellow-500);
   --daw-yellow-600: var(--color-yellow-600);
+  --daw-yellow-700: var(--color-yellow-700);
   --shadow: rgba(0, 0, 0, 0.08) 0px 2px 8px 0px, rgba(0, 0, 0, 0.04) 0px 1px 4px 0px, rgba(0, 0, 0, 0.08) 0px 0px 1px 0px;
 }
 
@@ -59,7 +62,10 @@
     --daw-green-100: var(--color-green-900);
     --daw-green-200: var(--color-green-800);
     --daw-green-700: var(--color-green-300);
+    --daw-yellow-100: var(--color-yellow-900);
+    --daw-yellow-200: var(--color-yellow-800);
     --daw-yellow-600: var(--color-yellow-400);
+    --daw-yellow-700: var(--color-yellow-300);
     --shadow: 0 0 0 1px rgba(255, 255, 255, 0.05), rgba(0, 0, 0, 0.24) 0px 2px 8px 0px, rgba(0, 0, 0, 0.12) 0px 1px 4px 0px, rgba(0, 0, 0, 0.24) 0px 0px 1px 0px;
   }
 }
@@ -91,8 +97,11 @@
   --color-daw-green-200: var(--daw-green-200);
   --color-daw-green-500: var(--daw-green-500);
   --color-daw-green-700: var(--daw-green-700);
+  --color-daw-yellow-100: var(--daw-yellow-100);
+  --color-daw-yellow-200: var(--daw-yellow-200);
   --color-daw-yellow-500: var(--daw-yellow-500);
   --color-daw-yellow-600: var(--daw-yellow-600);
+  --color-daw-yellow-700: var(--daw-yellow-700);
 
   --shadow-card: var(--shadow);
 }

@@ -1,16 +1,16 @@
 import { PullRequest, PullRequestReviewDecision, Repository } from '@octokit/graphql-schema';
-import { Fragment, createContext } from 'react';
+import { Fragment, createContext, useState } from 'react';
 import { Button, Link, Tab, TabList, TabPanel, Tabs } from 'react-aria-components';
-import { DiffCodeView } from './DiffCodeView';
+import { DiffCodeView, PendingComment } from './DiffCodeView';
 import { PullRequestThread } from './Timeline';
 import type { PullRequestReviewThread } from '@octokit/graphql-schema';
 import { Header } from './Issue';
-import { useQuery, github, preload } from './client';
+import { useQuery, github, preload, graphql } from './client';
 import { CommentCard } from './CommentCard';
 import { Timeline } from './Timeline';
-import { IssueCommentForm } from './CommentForm';
+import { IssueCommentForm, CommentForm } from './CommentForm';
 import { Card, Status, User } from './components';
-import useSWR, {preload as swrPreload} from 'swr';
+import useSWR, {preload as swrPreload, mutate} from 'swr';
 
 async function fetchPatch([, owner, repo, number]: ['patch', string, string, number]): Promise<string> {
   let res = await github.request('GET /repos/{owner}/{repo}/pulls/{pull_number}', {
@@ -32,38 +32,104 @@ export function PullRequestPage({owner, repo, number}: {owner: string, repo: str
   let { data: res } = useQuery<{repository: Repository}>(PullRequestPage.query(), {owner, repo, number});
   let data = res?.repository.pullRequest;
   let { data: patch } = usePatch(owner, repo, number);
+  let [pendingComment, setPendingComment] = useState<PendingComment | null>(null);
+
   if (!data) {
     return null;
   }
 
+  async function getOrCreateReviewId(): Promise<string> {
+    let reviewId = data!.reviews?.nodes?.find(r => r?.state === 'PENDING')?.id;
+    if (reviewId) return reviewId;
+
+    let result = await graphql<{addPullRequestReview: {pullRequestReview: {id: string}}}>(
+      `mutation AddPullRequestReview($pullRequestId: ID!) {
+        addPullRequestReview(input: { pullRequestId: $pullRequestId }) {
+          pullRequestReview {
+            id
+          }
+        }
+      }`,
+      { pullRequestId: data!.id }
+    );
+    return result.addPullRequestReview.pullRequestReview.id;
+  }
+
+  async function handleSubmitComment(body: string) {
+    if (!pendingComment || !data) return;
+
+    let reviewId = await getOrCreateReviewId();
+    let side = pendingComment.side === 'additions' ? 'RIGHT' : 'LEFT';
+    await graphql(
+      `mutation AddPullRequestReviewThread($pullRequestReviewId: ID!, $path: String!, $line: Int!, $side: DiffSide!, $body: String!) {
+        addPullRequestReviewThread(input: {
+          pullRequestReviewId: $pullRequestReviewId,
+          path: $path,
+          line: $line,
+          side: $side,
+          body: $body
+        }) {
+          thread {
+            id
+          }
+        }
+      }`,
+      {
+        pullRequestReviewId: reviewId,
+        path: pendingComment.path,
+        line: pendingComment.line,
+        side,
+        body
+      }
+    );
+
+    await mutate([PullRequestPage.query(), { owner, repo, number }]);
+    setPendingComment(null);
+  }
+
+  async function handleSubmitReview(event: 'APPROVE' | 'REQUEST_CHANGES' | 'COMMENT') {
+    if (!data) return;
+
+    let existingReviewId = data.reviews?.nodes?.find(r => r?.state === 'PENDING')?.id;
+    if (existingReviewId) {
+      await graphql(
+        `mutation SubmitPullRequestReview($pullRequestReviewId: ID!, $event: PullRequestReviewEvent!) {
+          submitPullRequestReview(input: {
+            pullRequestReviewId: $pullRequestReviewId,
+            event: $event
+          }) {
+            pullRequestReview {
+              id
+              state
+            }
+          }
+        }`,
+        { pullRequestReviewId: existingReviewId, event }
+      );
+    } else {
+      await graphql(
+        `mutation AddAndSubmitPullRequestReview($pullRequestId: ID!, $event: PullRequestReviewEvent!) {
+          addPullRequestReview(input: {
+            pullRequestId: $pullRequestId,
+            event: $event
+          }) {
+            pullRequestReview {
+              id
+              state
+            }
+          }
+        }`,
+        { pullRequestId: data.id, event }
+      );
+    }
+
+    await mutate([PullRequestPage.query(), { owner, repo, number }]);
+  }
+
+  let hasPendingReview = data.reviews?.nodes?.some(r => r?.state === 'PENDING') ?? false;
+
   return (
     <PullRequestContext.Provider value={data}>
-      {/*<div className="flex flex-col gap-4 my-4 w-full max-w-3xl mx-auto">
-        <Header data={data} />
-      </div>*/}
-      {/*<Tabs className="flex flex-col my-4 flex-1 min-h-0">
-        <TabList aria-label="Pull request tabs" className="flex gap-1 max-w-3xl mx-auto w-full">
-          <Tab id="overview" className="px-4 py-2 text-sm font-medium cursor-default outline-none rounded-t-md selected:border-b-2 selected:border-blue-600 selected:text-blue-600 hover:bg-daw-gray-100 focus-visible:ring-2 ring-blue-600">
-            Overview
-          </Tab>
-          <Tab id="files" className="px-4 py-2 text-sm font-medium cursor-default outline-none rounded-t-md selected:border-b-2 selected:border-blue-600 selected:text-blue-600 hover:bg-daw-gray-100 focus-visible:ring-2 ring-blue-600">
-            Files
-          </Tab>
-        </TabList>
-        <div className="border-b border-daw-gray-200 mx-2" />
-        <TabPanel id="overview" className="flex flex-col gap-4 mt-4 max-w-3xl mx-auto w-full">
-          <CommentCard data={data} />
-          <PullHeader data={data} />
-          <Timeline items={data.timelineItems.nodes!} />
-          <IssueCommentForm issue={data} />
-        </TabPanel>
-        <TabPanel id="files" className="flex-1 min-h-0">
-          {patch
-            ? <DiffCodeView patch={patch} threads={(data.reviewThreads.nodes ?? []) as Thread[]} renderAnnotation={annotation => <div className="font-sans text-base mx-2"><PullRequestThread data={annotation.metadata} /></div>} />
-            : <div className="text-sm text-daw-gray-500 py-4 max-w-3xl mx-auto w-full">Loading diff…</div>
-          }
-        </TabPanel>
-      </Tabs>*/}
       <div className="flex flex-1 min-h-0">
         <div className="flex flex-col gap-4 px-4 pb-4 pt-2 -mr-4 max-w-3xl mx-auto w-[500px] overflow-auto text-sm">
           <Header data={data} />
@@ -72,11 +138,56 @@ export function PullRequestPage({owner, repo, number}: {owner: string, repo: str
           <Timeline items={data.timelineItems.nodes!} />
           <IssueCommentForm issue={data} />
         </div>
-        <div className="flex-1">
-          {patch
-            ? <DiffCodeView patch={patch} threads={(data.reviewThreads.nodes ?? []) as Thread[]} renderAnnotation={annotation => <div className="font-sans text-base mx-2"><PullRequestThread data={annotation.metadata} /></div>} />
-            : <div className="text-sm text-daw-gray-500 py-4 max-w-3xl mx-auto w-full">Loading diff…</div>
-          }
+        <div className="flex flex-col flex-1 gap-2 pt-2 min-h-0">
+          {data.state === 'OPEN' && (
+            <div className="flex items-center gap-2 mx-4 bg-daw-white rounded-xl p-3 shadow-card shrink-0 text-sm">
+              <span className="text-daw-gray-600 mr-auto font-medium">Review changes</span>
+              <Button
+                isDisabled={!hasPendingReview}
+                onPress={() => handleSubmitReview('COMMENT')}
+                className="px-3 py-1.5 rounded-md bg-daw-gray-300 pressed:bg-daw-gray-400 border border-daw-gray-400 pressed:border-daw-gray-500 text-daw-gray-800 text-xs font-medium cursor-default outline-none focus-visible:ring-2 ring-offset-2 ring-blue-600 disabled:opacity-40"
+              >
+                Comment
+              </Button>
+              <Button
+                isDisabled={!hasPendingReview}
+                onPress={() => handleSubmitReview('REQUEST_CHANGES')}
+                className="px-3 py-1.5 rounded-md bg-red-500 pressed:bg-red-600 border border-red-600 pressed:border-red-700 text-white text-xs font-medium cursor-default outline-none focus-visible:ring-2 ring-offset-2 ring-blue-600 disabled:opacity-40"
+              >
+                Request changes
+              </Button>
+              <Button
+                onPress={() => handleSubmitReview('APPROVE')}
+                className="px-3 py-1.5 rounded-md bg-green-600 pressed:bg-green-700 border border-green-700 pressed:border-green-800 dark:border-green-500 dark:pressed:border-green-600 text-white text-xs font-medium cursor-default outline-none focus-visible:ring-2 ring-offset-2 ring-blue-600"
+              >
+                Approve
+              </Button>
+            </div>
+          )}
+          <div className="flex-1 min-h-0">
+            {patch
+              ? <DiffCodeView
+                  patch={patch}
+                  threads={(data.reviewThreads.nodes ?? []) as Thread[]}
+                  pendingComment={pendingComment}
+                  onGutterUtilityClick={(path, line, side) => setPendingComment({ path, line, side })}
+                  renderAnnotation={annotation => {
+                    let {metadata} = annotation;
+                    if (metadata === null) {
+                      return (
+                        <div className="font-sans text-base mx-2">
+                          <Card>
+                            <CommentForm autoFocus onSubmit={handleSubmitComment} onCancel={() => setPendingComment(null)} />
+                          </Card>
+                        </div>
+                      );
+                    }
+                    return <div className="font-sans text-base mx-2"><PullRequestThread data={metadata} /></div>;
+                  }}
+                />
+              : <div className="text-sm text-daw-gray-500 py-4 max-w-3xl mx-auto w-full">Loading diff…</div>
+            }
+          </div>
         </div>
       </div>
     </PullRequestContext.Provider>
@@ -119,6 +230,7 @@ query issueTimeline($owner: String!, $repo: String!, $number: Int!) {
       baseRefName
       reviews(last:100) {
         nodes {
+          id
           author {
             ...ActorFragment
           }

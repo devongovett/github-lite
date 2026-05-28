@@ -4,7 +4,7 @@ import { PullRequestPage } from "./PullRequest";
 import { github } from "./client";
 import { mutate } from 'swr';
 import { Button, Label, TextArea, TextField } from "react-aria-components";
-import { FormEvent, ReactNode } from "react";
+import { FormEvent, ReactNode, useState } from "react";
 
 export function IssueCommentForm({issue}: {issue: Issue | PullRequest}) {
   let onSubmit = async (comment: string) => {
@@ -32,26 +32,33 @@ export function IssueCommentForm({issue}: {issue: Issue | PullRequest}) {
   );
 }
 
-export function CommentForm({children, className, onSubmit}: {children: ReactNode, className?: string, onSubmit?: (comment: string) => Promise<void>}) {
+export function CommentForm({children, className, autoFocus, onSubmit, onCancel}: {children?: ReactNode, className?: string, autoFocus?: boolean, onSubmit?: (comment: string) => Promise<void>, onCancel?: () => void}) {
+  let [isPending, setPending] = useState(false);
   let handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     let form = e.target as HTMLFormElement;
     let comment = new FormData(form).get('comment');
     if (comment && typeof comment === 'string' && onSubmit) {
-      await onSubmit(comment);
+      try {
+        setPending(true);
+        await onSubmit(comment);
+      } finally {
+        setPending(false);
+      }
     }
     form.reset();
   };
 
   return (
     <form className={`flex flex-col gap-2 items-end ${className}`} onSubmit={handleSubmit}>
-      <TextField name="comment" className="flex flex-col gap-1 w-full">
+      <TextField name="comment" className="flex flex-col gap-1 w-full" autoFocus={autoFocus}>
         <Label className="text-xs">Comment</Label>
         <TextArea className="w-full bg-daw-gray-50 border border-daw-gray-400 rounded outline-none focus:ring-1 focus:border-blue-600 ring-blue-600 p-2" rows={4} />
       </TextField>
       <div className="flex gap-2">
         {children}
-        <Button type="submit" className="px-4 py-2 rounded-md bg-green-600 pressed:bg-green-700 border border-green-700 pressed:border-green-800 dark:border-green-500 dark:pressed:border-green-600 text-white text-sm font-medium cursor-default outline-none focus-visible:ring-2 ring-offset-2 ring-blue-600">Comment</Button>
+        {onCancel && <Button type="button" onPress={onCancel} className="px-4 py-2 rounded-md bg-daw-gray-300 pressed:bg-daw-gray-400 border border-daw-gray-400 pressed:border-daw-gray-500 text-daw-gray-800 text-sm font-medium cursor-default outline-none focus-visible:ring-2 ring-offset-2 ring-blue-600">Cancel</Button>}
+        <Button type="submit" isPending={isPending} className="px-4 py-2 rounded-md bg-green-600 pressed:bg-green-700 border border-green-700 pressed:border-green-800 dark:border-green-500 dark:pressed:border-green-600 pending:opacity-50 transition text-white text-sm font-medium cursor-default outline-none focus-visible:ring-2 ring-offset-2 ring-blue-600">Comment</Button>
       </div>
     </form>
   );

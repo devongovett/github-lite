@@ -350,7 +350,10 @@ export function PullRequestThread({data}: {data: PullRequestReviewThread}) {
               <div>
                 <User actor={comment!.author!} />
                 {' • '}
-                <span className="text-xs text-daw-gray-600" style={{gridArea: 'date'}}>{df.format(new Date(comment!.createdAt))}</span>
+                <span className="text-xs text-daw-gray-600" style={{ gridArea: 'date' }}>{df.format(new Date(comment!.createdAt))}</span>
+                {comment!.state === 'PENDING' &&
+                  <span className="w-fit ml-2 px-2 py-0.5 rounded border text-xs font-medium bg-daw-yellow-100 border-daw-yellow-200 text-daw-yellow-700">pending</span>
+                }
               </div>
               <div>
                 <CommentBody>{comment!.body}</CommentBody>
