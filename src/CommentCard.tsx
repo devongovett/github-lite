@@ -6,6 +6,7 @@ import { useDateFormatter } from 'react-aria';
 import { Button, Dialog, DialogTrigger, Link, Popover, ToggleButton } from 'react-aria-components';
 import { Avatar, Card } from './components';
 import { graphql } from './client';
+import { File } from '@pierre/diffs/react';
 
 export function CommentCard({data}: {data: Issue | PullRequest | IssueComment | PullRequestReviewComment | Discussion | DiscussionComment}) {
   let df = useDateFormatter({
@@ -58,6 +59,10 @@ fragment IssueCommentFragment on IssueComment {
 }
 `;
 
+const SUPPORTED_LANGUAGES = new Set([
+  '1c', '1c-query', 'abap', 'actionscript-3', 'ada', 'adoc', 'angular-html', 'angular-ts', 'apache', 'apex', 'apl', 'applescript', 'ara', 'asciidoc', 'asm', 'astro', 'awk', 'ballerina', 'bash', 'bat', 'batch', 'be', 'beancount', 'berry', 'bibtex', 'bicep', 'bird', 'bird2', 'blade', 'bsl', 'c', 'c#', 'c++', 'c3', 'cadence', 'cairo', 'cdc', 'cjs', 'clarity', 'clj', 'clojure', 'closure-templates', 'cmake', 'cmd', 'cobol', 'codeowners', 'codeql', 'coffee', 'coffeescript', 'common-lisp', 'console', 'coq', 'cpp', 'cql', 'crystal', 'cs', 'csharp', 'css', 'csv', 'cts', 'cue', 'cypher', 'd', 'dart', 'dax', 'desktop', 'diff', 'docker', 'dockerfile', 'dotenv', 'dream-maker', 'edge', 'elisp', 'elixir', 'elm', 'emacs-lisp', 'erb', 'erl', 'erlang', 'f', 'f#', 'f03', 'f08', 'f18', 'f77', 'f90', 'f95', 'fennel', 'fish', 'fluent', 'for', 'fortran-fixed-form', 'fortran-free-form', 'fs', 'fsharp', 'fsl', 'ftl', 'gd', 'gdresource', 'gdscript', 'gdshader', 'genie', 'gherkin', 'git-commit', 'git-rebase', 'gjs', 'gleam', 'glimmer-js', 'glimmer-ts', 'glsl', 'gn', 'gnuplot', 'go', 'gql', 'graphql', 'groovy', 'gts', 'hack', 'haml', 'handlebars', 'haskell', 'haxe', 'hbs', 'hcl', 'hjson', 'hlsl', 'hs', 'html', 'html-derivative', 'http', 'hurl', 'hxml', 'hy', 'imba', 'ini', 'jade', 'java', 'javascript', 'jinja', 'jison', 'jl', 'js', 'json', 'json5', 'jsonc', 'jsonl', 'jsonnet', 'jssm', 'jsx', 'julia', 'just', 'kdl', 'kotlin', 'kql', 'kt', 'kts', 'kusto', 'latex', 'lean', 'lean4', 'less', 'liquid', 'lisp', 'lit', 'llvm', 'log', 'logo', 'lua', 'luau', 'make', 'makefile', 'markdown', 'marko', 'matlab', 'mbt', 'mbti', 'md', 'mdc', 'mdx', 'mediawiki', 'mermaid', 'mips', 'mipsasm', 'mjs', 'mmd', 'mojo', 'moonbit', 'move', 'mts', 'nar', 'narrat', 'nextflow', 'nextflow-groovy', 'nf', 'nginx', 'nim', 'nix', 'nu', 'nushell', 'objc', 'objective-c', 'objective-cpp', 'ocaml', 'odin', 'openscad', 'pascal', 'perl', 'perl6', 'php', 'pkl', 'plsql', 'po', 'polar', 'postcss', 'pot', 'potx', 'powerquery', 'powershell', 'prisma', 'prolog', 'properties', 'proto', 'protobuf', 'ps', 'ps1', 'pug', 'puppet', 'purescript', 'py', 'python', 'ql', 'qml', 'qmldir', 'qss', 'r', 'racket', 'raku', 'razor', 'rb', 'reg', 'regex', 'regexp', 'rel', 'riscv', 'ron', 'rosmsg', 'rs', 'rst', 'ruby', 'rust', 'sas', 'sass', 'scad', 'scala', 'scheme', 'scss', 'sdbl', 'sh', 'shader', 'shaderlab', 'shell', 'shellscript', 'shellsession', 'smalltalk', 'solidity', 'soy', 'sparql', 'spl', 'splunk', 'sql', 'ssh-config', 'stata', 'styl', 'stylus', 'surql', 'surrealql', 'svelte', 'swift', 'system-verilog', 'systemd', 'talon', 'talonscript', 'tasl', 'tcl', 'templ', 'terraform', 'tex', 'tf', 'tfvars', 'toml', 'tres', 'ts', 'ts-tags', 'tscn', 'tsp', 'tsv', 'tsx', 'turtle', 'twig', 'typ', 'typescript', 'typespec', 'typst', 'v', 'vala', 'vb', 'verilog', 'vhdl', 'vim', 'viml', 'vimscript', 'vue', 'vue-html', 'vue-vine', 'vy', 'vyper', 'wasm', 'wenyan', 'wgsl', 'wiki', 'wikitext', 'wit', 'wl', 'wolfram', 'xml', 'xsl', 'yaml', 'yml', 'zenscript', 'zig', 'zsh', '文言'
+]);
+
 export function CommentBody({children}: {children: string}) {
   return (
     <Markdown className="[word-break:break-word]" options={{
@@ -65,8 +70,24 @@ export function CommentBody({children}: {children: string}) {
       overrides: {
         img: {props: {style: {maxWidth: '100%'}}},
         pre: {
-          props: {
-            className: 'border border-daw-gray-200 rounded p-2 bg-daw-gray-50 text-xs my-2 overflow-auto'
+          component: (props) => {
+            let child = props.children;
+            let lang = child?.props?.className?.match(/lang-([^\s]+)/);
+            if (lang && typeof child.props.children === 'string' && SUPPORTED_LANGUAGES.has(lang[1])) {
+              return (
+                <File
+                  file={{ name: '', lang: lang[1], contents: child.props.children }}
+                  options={{
+                    theme: { dark: 'pierre-dark', light: 'pierre-light' },
+                    themeType: 'system',
+                    disableFileHeader: true,
+                    disableLineNumbers: true
+                  }}
+                  className="my-2" />
+              );
+            } else {
+              return <pre {...props} className="border border-daw-gray-200 rounded p-2 bg-daw-gray-50 text-xs my-2 overflow-auto" />;
+            }
           }
         },
         h1: {
