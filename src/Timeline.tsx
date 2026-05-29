@@ -3,10 +3,12 @@ import { CheckCircleIcon, GitCommitIcon, CrossReferenceIcon, EyeIcon, GitBranchI
 import { useContext } from 'react';
 import { useDateFormatter } from 'react-aria';
 import { Button, Link } from 'react-aria-components';
-import { PullRequestContext } from './PullRequest';
+import { mutate } from 'swr';
+import { PullRequestContext, PullRequestPage } from './PullRequest';
 import { CommentCard, CommentBody, Reactions } from './CommentCard';
 import { Card, BranchName, GithubLabel, Icon, User, IssueStatus, Avatar, Status } from './components';
 import { CommentForm } from './CommentForm';
+import { graphql } from './client';
 
 export function Timeline({items}: {items: (IssueTimelineItems | PullRequestTimelineItems | null)[]}) {
   return <>
@@ -337,6 +339,18 @@ export function PullRequestThread({data}: {data: PullRequestReviewThread}) {
     hour: 'numeric',
     minute: 'numeric'
   });
+  let pr = useContext(PullRequestContext)!;
+
+  async function resolveThread() {
+    await graphql(`
+      mutation ResolveReviewThread($threadId: ID!) {
+        resolveReviewThread(input: {threadId: $threadId}) {
+          thread { id isResolved }
+        }
+      }
+    `, { threadId: data.id });
+    await mutate([PullRequestPage.query(), { owner: pr.repository.owner.login, repo: pr.repository.name, number: pr.number }]);
+  }
 
   return (
     <Card>
@@ -363,7 +377,7 @@ export function PullRequestThread({data}: {data: PullRequestReviewThread}) {
           ))}
           <CommentForm>
             {data.viewerCanResolve &&
-              <Button className="shrink-0 px-4 py-2 rounded-md bg-daw-gray-300 pressed:bg-daw-gray-400 border border-daw-gray-400 pressed:border-daw-gray-500 text-daw-gray-800 text-sm font-medium cursor-default outline-none focus-visible:ring-2 ring-offset-2 ring-blue-600">Resolve conversation</Button>
+              <Button onPress={resolveThread} className="shrink-0 px-4 py-2 rounded-md bg-daw-gray-300 pressed:bg-daw-gray-400 border border-daw-gray-400 pressed:border-daw-gray-500 text-daw-gray-800 text-sm font-medium cursor-default outline-none focus-visible:ring-2 ring-offset-2 ring-blue-600">Resolve conversation</Button>
             }
           </CommentForm>
         </div>
