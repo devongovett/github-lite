@@ -3,7 +3,7 @@ import { GitBranchIcon, GitCommitIcon } from '@primer/octicons-react';
 import { useDateFormatter } from 'react-aria';
 import { Button, ListBox, ListBoxItem, Popover, Select } from 'react-aria-components';
 import { Route, Routes, useLocation, useParams } from 'react-router-dom';
-import useSWR from 'swr';
+import useSWR, { preload as swrPreload } from 'swr';
 import useSWRInfinite from 'swr/infinite';
 import { useCallback, useState } from 'react';
 import { github } from './client';
@@ -82,6 +82,12 @@ export function CommitsView() {
     </div>
   );
 }
+
+CommitsView.preload = async function (owner: string, repo: string) {
+  const repoInfo = await swrPreload(['repo-info', owner, repo] as const, fetchRepoInfo);
+  const branch = repoInfo?.default_branch ?? 'main';
+  await swrPreload(['commits', owner, repo, branch, 1] as const, fetchCommitsPage)
+};
 
 function BranchSelector({branches, value, onChange}: {
   branches: BranchItem[];

@@ -1,8 +1,7 @@
-import { preload } from './client';
 import { PullRequestPage } from './PullRequest';
 import { Route, Routes, useLocation, useParams } from 'react-router-dom';
 import useSWRInfinite from 'swr/infinite';
-import useSWR from 'swr';
+import useSWR, { preload as swrPreload } from 'swr';
 import { useState, useCallback, useEffect } from 'react';
 import { GitMergeIcon, GitPullRequestClosedIcon, GitPullRequestDraftIcon, GitPullRequestIcon } from '@primer/octicons-react';
 import { List, ListItem, EmptyDetail } from './List';
@@ -181,6 +180,11 @@ function PullFilterPopover({
     </FilterPopoverWrapper>
   );
 }
+
+PullsView.preload = async function (owner: string, repo: string) {
+  const query = buildSearchQuery('pr', owner, repo, '', '', 'open', []);
+  swrPreload(['pulls', query, 'created', 'desc', 1] as const, fetchSearchPage);
+};
 
 // --- List items ---
 

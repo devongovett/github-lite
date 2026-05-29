@@ -31,6 +31,7 @@ export function App() {
   }
   return (
     <RouterProvider navigate={navigate}>
+      <RepoPreloader />
       <div className="flex flex-col h-full">
         <Toolbar />
         <div className="flex flex-1 gap-1 overflow-hidden">
@@ -51,6 +52,24 @@ export function App() {
 
 function Login() {
   return <h1>Login</h1>;
+}
+
+function RepoPreloader() {
+  const {pathname} = useLocation();
+  const {urlOwner, urlRepo} = parsePathParts(pathname);
+  
+  useEffect(() => {
+    const currentRepo = (urlOwner && urlRepo) ? `${urlOwner}/${urlRepo}` : (localStorage.getItem('github_lite_repo') ?? '');
+    const [owner, repo] = currentRepo.split('/');
+    if (owner && repo) {
+      IssuesView.preload(owner, repo);
+      PullsView.preload(owner, repo);
+      DiscussionsView.preload(owner, repo);
+      CommitsView.preload(owner, repo);
+    }
+  }, [urlOwner, urlRepo]);
+
+  return null;
 }
 
 function parsePathParts(pathname: string) {

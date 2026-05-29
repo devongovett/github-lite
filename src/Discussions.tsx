@@ -2,7 +2,7 @@ import { graphql, preload } from './client';
 import { DiscussionPage } from './Discussion';
 import { Route, Routes, useLocation, useParams } from 'react-router-dom';
 import useSWRInfinite from 'swr/infinite';
-import useSWR from 'swr';
+import useSWR, { preload as swrPreload, mutate } from 'swr';
 import { useState, useCallback, useEffect } from 'react';
 import { CheckCircleIcon, CommentDiscussionIcon } from '@primer/octicons-react';
 import { List, ListItem, EmptyDetail } from './List';
@@ -167,6 +167,11 @@ export function DiscussionsView() {
     </div>
   );
 }
+
+DiscussionsView.preload = async function (owner: string, repo: string) {
+  const query = buildDiscussionQuery(owner, repo, '', '', 'open', '', '', '');
+  swrPreload(['discussions', query, ''] as const, fetchDiscussions);
+};
 
 // --- Filter popover ---
 

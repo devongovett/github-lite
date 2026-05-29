@@ -1,8 +1,7 @@
-import { preload } from './client';
 import { IssuePage } from './Issue';
 import { Route, Routes, useLocation, useParams } from 'react-router-dom';
 import useSWRInfinite from 'swr/infinite';
-import useSWR from 'swr';
+import useSWR, { preload as swrPreload } from 'swr';
 import { useState, useCallback, useEffect } from 'react';
 import { IssueClosedIcon, IssueOpenedIcon } from '@primer/octicons-react';
 import { List, ListItem, EmptyDetail } from './List';
@@ -110,6 +109,11 @@ export function IssuesView() {
     </div>
   );
 }
+
+IssuesView.preload = async function (owner: string, repo: string) {
+  const query = buildSearchQuery('issue', owner, repo, '', '', 'open', []);
+  swrPreload(['issues', query, 'created', 'desc', 1] as const, fetchSearchPage);
+};
 
 // --- Filter popover ---
 
