@@ -11,6 +11,7 @@ import { Timeline } from './Timeline';
 import { IssueCommentForm, CommentForm } from './CommentForm';
 import { Card, Status, User } from './components';
 import useSWR, {preload as swrPreload, mutate} from 'swr';
+import { CommentIcon } from '@primer/octicons-react';
 
 async function fetchPatch([, owner, repo, number]: ['patch', string, string, number]): Promise<string> {
   let res = await github.request('GET /repos/{owner}/{repo}/pulls/{pull_number}', {
@@ -150,6 +151,10 @@ export function PullRequestPage({owner, repo, number}: {owner: string, repo: str
                 <span className="ml-1 text-daw-gray-600">{data.changedFiles} {data.changedFiles === 1 ? 'file' : 'files'}</span>
                 <span className="ml-3 text-red-500">-{data.deletions}</span>
                 <span className="ml-1 text-green-600">+{data.additions}</span>
+                {data.totalCommentsCount != null && data.totalCommentsCount > 0 && <>
+                  <CommentIcon className="ml-3 text-daw-gray-600" />
+                  <span className="ml-1 text-daw-gray-600">{data.totalCommentsCount}</span>
+                </>}
               </div>
               <Button
                 isDisabled={!hasPendingReview}
@@ -281,6 +286,7 @@ query issueTimeline($owner: String!, $repo: String!, $number: Int!) {
       additions
       deletions
       changedFiles
+      totalCommentsCount
       mergeable
       reviewDecision
       viewerCanMergeAsAdmin
