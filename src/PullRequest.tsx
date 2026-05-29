@@ -288,6 +288,11 @@ query issueTimeline($owner: String!, $repo: String!, $number: Int!) {
       changedFiles
       totalCommentsCount
       mergeable
+      isInMergeQueue
+      isMergeQueueEnabled
+      autoMergeRequest { mergeMethod }
+      viewerCanEnableAutoMerge
+      viewerCanDisableAutoMerge
       reviewDecision
       viewerCanMergeAsAdmin
       viewerCanClose
@@ -451,6 +456,10 @@ function Checks({data}: {data: PullRequest}) {
 
 function Merge({ data }: { data: PullRequest }) {
   let [isMerging, setMerging] = useState(false);
+  let [isUpdating, setUpdating] = useState(false);
+  let [isPending, setPending] = useState(false);
+
+  let refresh = () => mutate([PullRequestPage.query(), { owner: data.repository.owner.login, repo: data.repository.name, number: data.number }]);
 
   async function handleMerge() {
     setMerging(true);
@@ -461,13 +470,11 @@ function Merge({ data }: { data: PullRequest }) {
         pull_number: data.number,
         merge_method: data.repository.viewerDefaultMergeMethod.toLowerCase() as any,
       });
-      await mutate([PullRequestPage.query(), { owner: data.repository.owner.login, repo: data.repository.name, number: data.number }]);
+      await refresh();
     } finally {
       setMerging(false);
     }
   }
-
-  let [isUpdating, setUpdating] = useState(false);
 
   async function handleUpdateBranch() {
     setUpdating(true);
@@ -477,9 +484,49 @@ function Merge({ data }: { data: PullRequest }) {
         repo: data.repository.name,
         pull_number: data.number,
       });
-      await mutate([PullRequestPage.query(), { owner: data.repository.owner.login, repo: data.repository.name, number: data.number }]);
+      await refresh();
     } finally {
       setUpdating(false);
+    }
+  }
+
+  async function handleAddToQueue() {
+    setPending(true);
+    try {
+      await graphql(`mutation AddToMergeQueue($pullRequestId: ID!) { enqueuePullRequest(input: {pullRequestId: $pullRequestId}) { mergeQueue { id } } }`, { pullRequestId: data.id });
+      await refresh();
+    } finally {
+      setPending(false);
+    }
+  }
+
+  async function handleRemoveFromQueue() {
+    setPending(true);
+    try {
+      await graphql(`mutation RemoveFromMergeQueue($pullRequestId: ID!, $branch: String!) { dequeuePullRequest(input: {pullRequestId: $pullRequestId, branch: $branch}) { mergeQueue { id } } }`, { pullRequestId: data.id, branch: data.baseRefName });
+      await refresh();
+    } finally {
+      setPending(false);
+    }
+  }
+
+  async function handleEnableAutoMerge() {
+    setPending(true);
+    try {
+      await graphql(`mutation EnableAutoMerge($pullRequestId: ID!, $mergeMethod: PullRequestMergeMethod!) { enablePullRequestAutoMerge(input: {pullRequestId: $pullRequestId, mergeMethod: $mergeMethod}) { pullRequest { id } } }`, { pullRequestId: data.id, mergeMethod: data.repository.viewerDefaultMergeMethod });
+      await refresh();
+    } finally {
+      setPending(false);
+    }
+  }
+
+  async function handleDisableAutoMerge() {
+    setPending(true);
+    try {
+      await graphql(`mutation DisableAutoMerge($pullRequestId: ID!) { disablePullRequestAutoMerge(input: {pullRequestId: $pullRequestId}) { pullRequest { id } } }`, { pullRequestId: data.id });
+      await refresh();
+    } finally {
+      setPending(false);
     }
   }
 
@@ -489,6 +536,28 @@ function Merge({ data }: { data: PullRequest }) {
         <p className="text-xs text-daw-gray-600 text-balance flex-1">Conflicts must be resolved before merging.</p>
         {data.viewerCanUpdateBranch &&
           <Button isPending={isUpdating} onPress={handleUpdateBranch} className="shrink-0 px-4 py-2 rounded-md bg-neutral-600 pressed:bg-neutral-700 border border-neutral-500 pressed:border-neutral-600 pending:opacity-50 transition text-white cursor-default outline-none focus-visible:ring-2 ring-offset-2 ring-blue-600">Update branch</Button>
+        }
+      </div>
+    );
+  }
+
+  if (data.reviewDecision !== 'APPROVED' && (data.viewerCanEnableAutoMerge || data.viewerCanDisableAutoMerge)) {
+    return (
+      <div className="flex gap-2 items-center justify-end">
+        {data.autoMergeRequest
+          ? <Button isPending={isPending} onPress={handleDisableAutoMerge} className="shrink-0 px-4 py-2 rounded-md bg-neutral-600 pressed:bg-neutral-700 border border-neutral-500 pressed:border-neutral-600 pending:opacity-50 transition text-white cursor-default outline-none focus-visible:ring-2 ring-offset-2 ring-blue-600">Disable auto-merge</Button>
+          : <Button isPending={isPending} onPress={handleEnableAutoMerge} className="shrink-0 px-4 py-2 rounded-md bg-neutral-600 pressed:bg-neutral-700 border border-neutral-500 pressed:border-neutral-600 pending:opacity-50 transition text-white cursor-default outline-none focus-visible:ring-2 ring-offset-2 ring-blue-600">Enable auto-merge</Button>
+        }
+      </div>
+    );
+  }
+
+  if (data.reviewDecision === 'APPROVED' && data.isMergeQueueEnabled) {
+    return (
+      <div className="flex gap-2 items-center justify-end">
+        {data.isInMergeQueue
+          ? <Button isPending={isPending} onPress={handleRemoveFromQueue} className="shrink-0 px-4 py-2 rounded-md bg-neutral-600 pressed:bg-neutral-700 border border-neutral-500 pressed:border-neutral-600 pending:opacity-50 transition text-white cursor-default outline-none focus-visible:ring-2 ring-offset-2 ring-blue-600">Remove from merge queue</Button>
+          : <Button isPending={isPending} onPress={handleAddToQueue} className="shrink-0 px-4 py-2 rounded-md bg-green-600 pressed:bg-green-700 border border-green-700 pressed:border-green-800 dark:border-green-500 dark:pressed:border-green-600 pending:opacity-50 transition text-white cursor-default outline-none focus-visible:ring-2 ring-offset-2 ring-blue-600">Add to merge queue</Button>
         }
       </div>
     );
