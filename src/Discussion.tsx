@@ -1,7 +1,8 @@
 import { Discussion, DiscussionComment, Repository } from '@octokit/graphql-schema';
-import { CheckCircleIcon } from '@primer/octicons-react';
+import { CheckCircleIcon, CommentIcon } from '@primer/octicons-react';
 import Markdown from 'markdown-to-jsx';
-import { Link } from 'react-aria-components';
+import { useState } from 'react';
+import { Button, Link } from 'react-aria-components';
 import { graphql, useQuery } from './client';
 import { CommentCard, Reactions } from './CommentCard';
 import { CommentForm } from './CommentForm';
@@ -13,14 +14,14 @@ export function DiscussionPage({owner, repo, number}: {owner: string, repo: stri
   let data = res?.repository.discussion;
   if (!data) return null;
 
-  let onSubmit = async (body: string) => {
+  async function addComment(body: string, replyToId?: string) {
     await graphql(`
       mutation AddDiscussionComment($input: AddDiscussionCommentInput!) {
         addDiscussionComment(input: $input) { comment { id } }
       }
-    `, {input: {discussionId: data!.id, body}});
+    `, {input: {discussionId: data!.id, body, ...(replyToId ? {replyToId} : {})}});
     mutate([DiscussionPage.query(), {owner, repo, number}]);
-  };
+  }
 
   async function deleteComment(id: string) {
     await graphql(`mutation DeleteDiscussionComment($id: ID!) { deleteDiscussionComment(input: {id: $id}) { clientMutationId } }`, { id });
@@ -32,9 +33,9 @@ export function DiscussionPage({owner, repo, number}: {owner: string, repo: stri
       <DiscussionHeader data={data} />
       <CommentCard data={data} />
       {data.comments.nodes?.map(comment => comment && (
-        <DiscussionCommentItem key={comment.id} comment={comment} onDelete={deleteComment} />
+        <DiscussionCommentItem key={comment.id} comment={comment} onDelete={deleteComment} onReply={addComment} />
       ))}
-      <CommentForm onSubmit={onSubmit}>{null}</CommentForm>
+      <CommentForm onSubmit={addComment}>{null}</CommentForm>
     </div>
   );
 }
@@ -103,7 +104,14 @@ function DiscussionHeader({data}: {data: Discussion}) {
   );
 }
 
-function DiscussionCommentItem({comment, onDelete}: {comment: DiscussionComment, onDelete: (id: string) => Promise<void>}) {
+function DiscussionCommentItem({comment, onDelete, onReply}: {
+  comment: DiscussionComment;
+  onDelete: (id: string) => Promise<void>;
+  onReply: (body: string, replyToId: string) => Promise<void>;
+}) {
+  const [showReply, setShowReply] = useState(false);
+  const hasReplies = (comment.replies.nodes?.length ?? 0) > 0;
+
   return (
     <div className="flex flex-col gap-2">
       <div className="relative">
@@ -115,13 +123,29 @@ function DiscussionCommentItem({comment, onDelete}: {comment: DiscussionComment,
         )}
         <CommentCard data={comment} onDelete={() => onDelete(comment.id)} />
       </div>
-      {comment.replies.nodes && comment.replies.nodes.length > 0 && (
-        <div className="ml-8 flex flex-col gap-2 border-l-2 border-daw-gray-200 pl-4">
-          {comment.replies.nodes.map(reply => reply && (
-            <CommentCard key={reply.id} data={reply} onDelete={() => onDelete(reply.id)} />
-          ))}
-        </div>
-      )}
+      <div className="ml-8 flex flex-col gap-2 border-l-2 border-daw-gray-200 pl-4">
+        {comment.replies.nodes?.map(reply => reply && (
+          <CommentCard key={reply.id} data={reply} onDelete={() => onDelete(reply.id)} />
+        ))}
+        {showReply && (
+          <CommentForm
+            autoFocus
+            onSubmit={async (body) => {
+              await onReply(body, comment.id);
+              setShowReply(false);
+            }}
+            onCancel={() => setShowReply(false)}
+          />
+        )}
+        {!showReply && (
+          <Button
+            onPress={() => setShowReply(true)}
+            className="self-start flex items-center gap-1.5 text-xs text-daw-gray-700 hover:text-daw-gray-800 transition cursor-default outline-none focus-visible:ring-2 ring-blue-600 rounded py-0.5">
+            <CommentIcon />
+            Reply
+          </Button>
+        )}
+      </div>
     </div>
   );
 }
