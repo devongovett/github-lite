@@ -53,6 +53,7 @@ export function NotificationsView() {
 
   let notifications = data?.flat() ?? [];
   let isLoadingMore = !isLoading && isValidating && (data?.length ?? 0) < size;
+  let hasMore = !data || data[data.length - 1]?.length >= PER_PAGE;
 
   const markAsRead = useCallback((id: string) => {
     mutate(
@@ -70,6 +71,7 @@ export function NotificationsView() {
         selectedKeys={[pathname]}
         isLoading={isLoading}
         isLoadingMore={isLoadingMore}
+        hasMore={hasMore}
         onLoadMore={() => { if (!isLoading && !isValidating && !error) setSize(size + 1); }}>
         {item => <NotificationItem item={item} />}
       </List>

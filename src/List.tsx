@@ -16,6 +16,7 @@ export interface ListProps<T extends object> {
   selectedKeys: Iterable<string | number>;
   isLoading: boolean;
   isLoadingMore: boolean;
+  hasMore?: boolean;
   onLoadMore: () => void;
   children: (item: T) => ReactNode;
   header?: ReactNode;
@@ -27,6 +28,7 @@ export function List<T extends object>({
   selectedKeys,
   isLoading,
   isLoadingMore,
+  hasMore = true,
   onLoadMore,
   children,
   header
@@ -54,7 +56,7 @@ export function List<T extends object>({
             <Collection items={items}>
               {children}
             </Collection>
-            {!isLoading && (
+            {!isLoading && hasMore && (
               <ListBoxLoadMoreItem isLoading={isLoadingMore} onLoadMore={onLoadMore}>
                 <div className="flex justify-center items-center h-12">
                   <div className="w-5 h-5 border-2 border-daw-gray-300 border-t-blue-500 rounded-full animate-spin" />

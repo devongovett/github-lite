@@ -118,6 +118,7 @@ export function DiscussionsView() {
 
   const discussions = data?.flatMap(p => p.nodes) ?? [];
   const isLoadingMore = !isLoading && isValidating && (data?.length ?? 0) < size;
+  const hasMore = !data || data[data.length - 1]?.pageInfo.hasNextPage !== false;
 
   const activeFilterCount = [
     status !== 'open',
@@ -153,6 +154,7 @@ export function DiscussionsView() {
         selectedKeys={[pathname]}
         isLoading={isLoading}
         isLoadingMore={isLoadingMore}
+        hasMore={hasMore}
         header={header}
         onLoadMore={() => { if (!isLoading && !isValidating && !error) setSize(size + 1); }}>
         {discussion => <DiscussionListItem discussion={discussion} owner={owner} repo={repo} />}
