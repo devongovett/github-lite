@@ -2,7 +2,8 @@ import { Issue, PullRequest, Repository } from '@octokit/graphql-schema';
 import { ArrowRightIcon } from '@primer/octicons-react';
 import Markdown from 'markdown-to-jsx';
 import { Link } from 'react-aria-components';
-import { preload, useQuery } from './client';
+import { mutate } from 'swr';
+import { graphql, preload, useQuery } from './client';
 import { Timeline } from './Timeline';
 import { CommentCard } from './CommentCard';
 import { Avatar, BranchName, IssueStatus } from './components';
@@ -15,11 +16,16 @@ export function IssuePage({owner, repo, number}: {owner: string, repo: string, n
     return null;
   }
 
+  async function deleteComment(id: string) {
+    await graphql(`mutation DeleteIssueComment($id: ID!) { deleteIssueComment(input: {id: $id}) { clientMutationId } }`, { id });
+    await mutate([IssuePage.query(), { owner, repo, number }]);
+  }
+
   return (
     <div className="flex flex-col gap-4 my-4 w-full max-w-3xl mx-auto">
       <Header data={data} />
       <CommentCard data={data} />
-      <Timeline items={data.timelineItems.nodes!} />
+      <Timeline items={data.timelineItems.nodes!} onDeleteComment={deleteComment} />
       <IssueCommentForm issue={data} />
     </div>
   );

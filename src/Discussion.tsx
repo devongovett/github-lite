@@ -22,12 +22,17 @@ export function DiscussionPage({owner, repo, number}: {owner: string, repo: stri
     mutate([DiscussionPage.query(), {owner, repo, number}]);
   };
 
+  async function deleteComment(id: string) {
+    await graphql(`mutation DeleteDiscussionComment($id: ID!) { deleteDiscussionComment(input: {id: $id}) { clientMutationId } }`, { id });
+    await mutate([DiscussionPage.query(), { owner, repo, number }]);
+  }
+
   return (
     <div className="flex flex-col gap-4 my-4 w-full max-w-3xl mx-auto">
       <DiscussionHeader data={data} />
       <CommentCard data={data} />
       {data.comments.nodes?.map(comment => comment && (
-        <DiscussionCommentItem key={comment.id} comment={comment} />
+        <DiscussionCommentItem key={comment.id} comment={comment} onDelete={deleteComment} />
       ))}
       <CommentForm onSubmit={onSubmit}>{null}</CommentForm>
     </div>
@@ -55,12 +60,12 @@ query Discussion($owner: String!, $repo: String!, $number: Int!) {
       }
       comments(first: 100) {
         nodes {
-          id body createdAt isAnswer
+          __typename id body createdAt isAnswer viewerCanDelete
           author { ...ActorFragment }
           reactionGroups { ...ReactionFragment }
           replies(first: 20) {
             nodes {
-              id body createdAt
+              __typename id body createdAt viewerCanDelete
               author { ...ActorFragment }
               reactionGroups { ...ReactionFragment }
             }
@@ -98,7 +103,7 @@ function DiscussionHeader({data}: {data: Discussion}) {
   );
 }
 
-function DiscussionCommentItem({comment}: {comment: DiscussionComment}) {
+function DiscussionCommentItem({comment, onDelete}: {comment: DiscussionComment, onDelete: (id: string) => Promise<void>}) {
   return (
     <div className="flex flex-col gap-2">
       <div className="relative">
@@ -108,12 +113,12 @@ function DiscussionCommentItem({comment}: {comment: DiscussionComment}) {
             Marked as answer
           </div>
         )}
-        <CommentCard data={comment} />
+        <CommentCard data={comment} onDelete={() => onDelete(comment.id)} />
       </div>
       {comment.replies.nodes && comment.replies.nodes.length > 0 && (
         <div className="ml-8 flex flex-col gap-2 border-l-2 border-daw-gray-200 pl-4">
           {comment.replies.nodes.map(reply => reply && (
-            <CommentCard key={reply.id} data={reply} />
+            <CommentCard key={reply.id} data={reply} onDelete={() => onDelete(reply.id)} />
           ))}
         </div>
       )}

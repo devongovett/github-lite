@@ -1,5 +1,5 @@
 import { Discussion, DiscussionComment, Issue, IssueComment, PullRequest, PullRequestReviewComment, ReactionContent, ReactionGroup } from '@octokit/graphql-schema';
-import { SmileyIcon } from '@primer/octicons-react';
+import { SmileyIcon, TrashIcon } from '@primer/octicons-react';
 import Markdown from 'markdown-to-jsx';
 import { useState } from 'react';
 import { useDateFormatter } from 'react-aria';
@@ -8,7 +8,7 @@ import { Avatar, Card } from './components';
 import { graphql } from './client';
 import { File } from '@pierre/diffs/react';
 
-export function CommentCard({data}: {data: Issue | PullRequest | IssueComment | PullRequestReviewComment | Discussion | DiscussionComment}) {
+export function CommentCard({data, onDelete}: {data: Issue | PullRequest | IssueComment | Discussion | DiscussionComment, onDelete?: () => Promise<void>}) {
   let df = useDateFormatter({
     year: 'numeric',
     month: 'numeric',
@@ -16,6 +16,8 @@ export function CommentCard({data}: {data: Issue | PullRequest | IssueComment | 
     hour: 'numeric',
     minute: 'numeric'
   });
+
+  let canDelete = onDelete && 'viewerCanDelete' in data && (data as IssueComment).viewerCanDelete;
 
   return (
     <Card>
@@ -34,7 +36,14 @@ export function CommentCard({data}: {data: Issue | PullRequest | IssueComment | 
           gridTemplateColumns: '40px 1fr'
         }}>
         <Avatar size="l" className="[grid-area:avatar]" src={data.author!.avatarUrl} />
-        <span className="font-medium text-sm" style={{gridArea: 'username'}}>{data.author!.login}</span>
+        <div className="flex justify-between items-center" style={{gridArea: 'username'}}>
+          <span className="font-medium text-sm">{data.author!.login}</span>
+          {canDelete && (
+            <Button onPress={() => window.confirm('Delete this comment?') && onDelete!()} className="text-daw-gray-400 hover:text-daw-red-500 pressed:text-daw-red-600 cursor-default outline-none focus-visible:ring-2 ring-blue-600 rounded">
+              <TrashIcon size={14} />
+            </Button>
+          )}
+        </div>
         <span className="text-xs text-daw-gray-600" style={{gridArea: 'date'}}>{df.format(new Date(data.createdAt))}</span>
         <div style={{gridArea: 'body'}}>
           <CommentBody>{data.body}</CommentBody>
@@ -47,6 +56,7 @@ export function CommentCard({data}: {data: Issue | PullRequest | IssueComment | 
 
 CommentCard.fragment = `
 fragment IssueCommentFragment on IssueComment {
+  __typename
   id
   body
   createdAt
@@ -56,6 +66,7 @@ fragment IssueCommentFragment on IssueComment {
   reactionGroups {
     ...ReactionFragment
   }
+  viewerCanDelete
 }
 `;
 

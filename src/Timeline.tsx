@@ -1,5 +1,5 @@
 import { AutomaticBaseChangeSucceededEvent, ClosedEvent, CommentDeletedEvent, Commit, ConvertToDraftEvent, CrossReferencedEvent, HeadRefDeletedEvent, HeadRefForcePushedEvent, IssueTimelineItems, LabeledEvent, MergedEvent, PullRequestCommit, PullRequestReview, PullRequestReviewThread, PullRequestTimelineItems, ReadyForReviewEvent, ReferencedEvent, RenamedTitleEvent, ReopenedEvent, ReviewDismissedEvent, ReviewRequestedEvent, UnlabeledEvent } from '@octokit/graphql-schema';
-import { CheckCircleIcon, GitCommitIcon, CrossReferenceIcon, EyeIcon, GitBranchIcon, GitMergeIcon, GitPullRequestClosedIcon, GitPullRequestDraftIcon, IssueClosedIcon, IssueReopenedIcon, PencilIcon, RepoPushIcon, SkipIcon, TagIcon, XIcon } from '@primer/octicons-react';
+import { CheckCircleIcon, GitCommitIcon, CrossReferenceIcon, EyeIcon, GitBranchIcon, GitMergeIcon, GitPullRequestClosedIcon, GitPullRequestDraftIcon, IssueClosedIcon, IssueReopenedIcon, PencilIcon, RepoPushIcon, SkipIcon, TagIcon, TrashIcon, XIcon } from '@primer/octicons-react';
 import { useContext } from 'react';
 import { useDateFormatter } from 'react-aria';
 import { Button, Link } from 'react-aria-components';
@@ -10,12 +10,12 @@ import { Card, BranchName, GithubLabel, Icon, User, IssueStatus, Avatar, Status 
 import { CommentForm } from './CommentForm';
 import { graphql } from './client';
 
-export function Timeline({items}: {items: (IssueTimelineItems | PullRequestTimelineItems | null)[]}) {
+export function Timeline({items, onDeleteComment}: {items: (IssueTimelineItems | PullRequestTimelineItems | null)[], onDeleteComment?: (id: string) => Promise<void>}) {
   return <>
     {items.map((item, i) => {
       switch (item?.__typename) {
         case 'IssueComment':
-          return <CommentCard key={i} data={item} />;
+          return <CommentCard key={i} data={item} onDelete={onDeleteComment ? () => onDeleteComment(item.id) : undefined} />;
         case 'AutomaticBaseChangeSucceededEvent':
           return <BaseChanged key={i} data={item} />;
         case 'PullRequestCommit':
@@ -352,6 +352,15 @@ export function PullRequestThread({data}: {data: PullRequestReviewThread}) {
     await mutate([PullRequestPage.query(), { owner: pr.repository.owner.login, repo: pr.repository.name, number: pr.number }]);
   }
 
+  async function deleteReviewComment(id: string) {
+    await graphql(`
+      mutation DeletePullRequestReviewComment($id: ID!) {
+        deletePullRequestReviewComment(input: {id: $id}) { clientMutationId }
+      }
+    `, { id });
+    await mutate([PullRequestPage.query(), { owner: pr.repository.owner.login, repo: pr.repository.name, number: pr.number }]);
+  }
+
   return (
     <Card>
       <details open={!data.isCollapsed}>
@@ -361,12 +370,19 @@ export function PullRequestThread({data}: {data: PullRequestReviewThread}) {
         <div className="flex flex-col gap-4 pt-3 mt-3 border-t border-daw-gray-200 whitespace-normal text-sm">
           {data.comments.nodes?.map(comment => (
             <div key={comment!.id} className="flex flex-col gap-2 pb-4 border-b border-daw-gray-200">
-              <div>
-                <User actor={comment!.author!} />
-                {' • '}
-                <span className="text-xs text-daw-gray-600" style={{ gridArea: 'date' }}>{df.format(new Date(comment!.createdAt))}</span>
-                {comment!.state === 'PENDING' &&
-                  <span className="w-fit ml-2 px-2 py-0.5 rounded border text-xs font-medium bg-daw-yellow-100 border-daw-yellow-200 text-daw-yellow-700">pending</span>
+              <div className="flex justify-between items-center">
+                <div>
+                  <User actor={comment!.author!} />
+                  {' • '}
+                  <span className="text-xs text-daw-gray-600">{df.format(new Date(comment!.createdAt))}</span>
+                  {comment!.state === 'PENDING' &&
+                    <span className="w-fit ml-2 px-2 py-0.5 rounded border text-xs font-medium bg-daw-yellow-100 border-daw-yellow-200 text-daw-yellow-700">pending</span>
+                  }
+                </div>
+                {comment!.viewerCanDelete &&
+                  <Button onPress={() => deleteReviewComment(comment!.id)} className="text-daw-gray-400 hover:text-daw-red-500 pressed:text-daw-red-600 cursor-default outline-none focus-visible:ring-2 ring-blue-600 rounded">
+                    <TrashIcon size={14} />
+                  </Button>
                 }
               </div>
               <div>
@@ -417,6 +433,7 @@ fragment PullRequestThreadFragment on PullRequestReviewThread {
       path
       state
       outdated
+      viewerCanDelete
     }
   }
 }

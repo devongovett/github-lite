@@ -126,6 +126,11 @@ export function PullRequestPage({owner, repo, number}: {owner: string, repo: str
     await mutate([PullRequestPage.query(), { owner, repo, number }]);
   }
 
+  async function deleteComment(id: string) {
+    await graphql(`mutation DeleteIssueComment($id: ID!) { deleteIssueComment(input: {id: $id}) { clientMutationId } }`, { id });
+    await mutate([PullRequestPage.query(), { owner, repo, number }]);
+  }
+
   let hasPendingReview = data.reviews?.nodes?.some(r => r?.state === 'PENDING') ?? false;
 
   return (
@@ -135,7 +140,7 @@ export function PullRequestPage({owner, repo, number}: {owner: string, repo: str
           <Header data={data} />
           <CommentCard data={data} />
           <PullHeader data={data} />
-          <Timeline items={data.timelineItems.nodes!} />
+          <Timeline items={data.timelineItems.nodes!} onDeleteComment={deleteComment} />
           <IssueCommentForm issue={data} />
         </div>
         <div className="flex flex-col flex-1 gap-2 pt-2 min-h-0">
