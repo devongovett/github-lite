@@ -7,7 +7,7 @@ import { useState, useCallback, useEffect } from 'react';
 import { CheckCircleIcon, CommentDiscussionIcon } from '@primer/octicons-react';
 import { List, ListItem, EmptyDetail } from './List';
 import { Button, Input, RadioGroup, TextField } from 'react-aria-components';
-import { FilterSection, RadioItem, SearchBar, FilterPopoverWrapper, SORT_OPTIONS } from './Filters';
+import { FilterSection, RadioItem, SearchBar, FilterPopoverWrapper, DISCUSSION_SORT_OPTIONS } from './Filters';
 
 type DiscussionItem = {
   id: string;
@@ -75,8 +75,7 @@ function buildDiscussionQuery(owner: string, repo: string, search: string, autho
   if (author) parts.push(`author:${author}`);
   if (category) parts.push(`category:"${category}"`);
   if (search) parts.push(search);
-  const [sortBy, sortDir] = sort.split('-');
-  parts.push(`sort:${sortBy}-${sortDir}`);
+  if (sort) parts.push(`sort:${sort}`);
   return parts.join(' ');
 }
 
@@ -89,7 +88,7 @@ export function DiscussionsView() {
   const [authorInput, setAuthorInput] = useState('');
   const [author, setAuthor] = useState('');
   const [category, setCategory] = useState('');
-  const [sort, setSort] = useState('created-desc');
+  const [sort, setSort] = useState('');
 
   useEffect(() => {
     const timer = setTimeout(() => setSearch(searchInput), 300);
@@ -125,7 +124,7 @@ export function DiscussionsView() {
     !!answered,
     !!category,
     !!authorInput.trim(),
-    sort !== 'created-desc',
+    sort !== '',
   ].filter(Boolean).length;
 
   const header = (
@@ -140,7 +139,7 @@ export function DiscussionsView() {
         activeCount={activeFilterCount}
         onClear={() => {
           setStatus('open'); setAnswered(''); setCategory('');
-          setAuthorInput(''); setAuthor(''); setSort('created-desc');
+          setAuthorInput(''); setAuthor(''); setSort('');
         }}
       />
     </SearchBar>
@@ -216,7 +215,7 @@ function DiscussionFilterPopover({
       <hr className="border-daw-gray-200" />
       <FilterSection label="Sort">
         <RadioGroup value={sort} onChange={onSortChange} aria-label="Sort" className="flex flex-col gap-1">
-          {SORT_OPTIONS.map(opt => <RadioItem key={opt.value} value={opt.value} label={opt.label} />)}
+          {DISCUSSION_SORT_OPTIONS.map(opt => <RadioItem key={opt.value} value={opt.value} label={opt.label} />)}
         </RadioGroup>
       </FilterSection>
       {categories.length > 0 && (

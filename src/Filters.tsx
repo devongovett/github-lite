@@ -16,11 +16,23 @@ export type SearchPageResult = {items: SearchItem[], hasNext: boolean};
 
 export const PER_PAGE = 100;
 
+export const DISCUSSION_SORT_OPTIONS = [
+  { value: '', label: 'Latest activity' },
+  { value: 'date_created', label: 'Newest' },
+  { value: 'top', label: 'Top' },
+];
+
 export const SORT_OPTIONS = [
   { value: 'created-desc', label: 'Newest' },
   { value: 'created-asc', label: 'Oldest' },
   { value: 'comments-desc', label: 'Most commented' },
   { value: 'updated-desc', label: 'Recently updated' },
+  { value: 'reactions-desc', label: '🔥 Most reactions' },
+  { value: 'reactions-+1-desc', label: '👍 Thumbs up' },
+  { value: 'reactions-heart-desc', label: '❤️ Heart' },
+  { value: 'reactions-tada-desc', label: '🎉 Tada' },
+  { value: 'reactions-rocket-desc', label: '🚀 Rocket' },
+  { value: 'reactions-eyes-desc', label: '👀 Eyes' },
 ];
 
 export function buildSearchQuery(
@@ -46,7 +58,7 @@ export async function fetchLabels([, owner, repo]: readonly ['labels', string, s
 export async function fetchSearchPage([, query, sortBy, sortDir, page]: SearchKey): Promise<SearchPageResult> {
   let res = await github.search.issuesAndPullRequests({
     q: query,
-    sort: sortBy as 'created' | 'updated' | 'comments',
+    sort: sortBy as any,
     order: sortDir as 'asc' | 'desc',
     per_page: PER_PAGE,
     page

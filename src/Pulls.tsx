@@ -49,7 +49,9 @@ export function PullsView() {
 
   const getKey = useCallback((pageIndex: number, prev: PullPageResult | null) => {
     if (prev && !prev.hasNext) return null;
-    const [sortBy, sortDir] = sort.split('-') as [string, string];
+    const lastDash = sort.lastIndexOf('-');
+    const sortBy = sort.slice(0, lastDash);
+    const sortDir = sort.slice(lastDash + 1);
     const extra = draft ? ['is:draft'] : [];
     const query = buildSearchQuery('pr', owner, repo, search, author, status, selectedLabels, extra);
     return ['pulls', query, sortBy, sortDir, pageIndex + 1] as SearchKey;

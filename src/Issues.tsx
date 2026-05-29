@@ -44,7 +44,9 @@ export function IssuesView() {
 
   const getKey = useCallback((pageIndex: number, prev: IssuePageResult | null) => {
     if (prev && !prev.hasNext) return null;
-    const [sortBy, sortDir] = sort.split('-') as [string, string];
+    const lastDash = sort.lastIndexOf('-');
+    const sortBy = sort.slice(0, lastDash);
+    const sortDir = sort.slice(lastDash + 1);
     const labels = [...selectedLabels, ...(issueType ? [issueType] : [])];
     const query = buildSearchQuery('issue', owner, repo, search, author, status, labels);
     return ['issues', query, sortBy, sortDir, pageIndex + 1] as SearchKey;
