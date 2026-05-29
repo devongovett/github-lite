@@ -87,11 +87,12 @@ export function Status({state, filled}: {state: StatusState | CheckConclusionSta
 interface CardProps extends DOMAttributes<Element> {
   children: ReactNode,
   gridArea?: string
+  className?: string
 }
 
-export function Card({children, gridArea, ...otherProps}: CardProps) {
+export function Card({children, gridArea, className, ...otherProps}: CardProps) {
   return (
-    <div className="bg-daw-white rounded-xl p-3 shadow-card min-w-0" style={{gridArea}} {...otherProps}>
+    <div className={`bg-daw-white rounded-xl p-3 shadow-card min-w-0 ${className || ''}`} style={{gridArea}} {...otherProps}>
       {children}
     </div>
   );

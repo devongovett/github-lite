@@ -1,5 +1,5 @@
 import { Discussion, DiscussionComment, Issue, IssueComment, PullRequest, PullRequestReviewComment, ReactionContent, ReactionGroup } from '@octokit/graphql-schema';
-import { SmileyIcon, TrashIcon } from '@primer/octicons-react';
+import { CheckCircleIcon, SmileyIcon, TrashIcon } from '@primer/octicons-react';
 import Markdown from 'markdown-to-jsx';
 import { useState } from 'react';
 import { useDateFormatter } from 'react-aria';
@@ -17,10 +17,17 @@ export function CommentCard({data, onDelete}: {data: Issue | PullRequest | Issue
     minute: 'numeric'
   });
 
+  let isAnswer = 'isAnswer' in data && data.isAnswer;
   let canDelete = onDelete && 'viewerCanDelete' in data && (data as IssueComment).viewerCanDelete;
 
   return (
-    <Card>
+    <Card className={isAnswer ? 'outline outline-2 outline-daw-green-700' : ''}>
+      {isAnswer && (
+        <div className="flex items-center gap-1.5 text-xs text-daw-green-700 font-medium mb-2">
+          <CheckCircleIcon size={14} className="text-daw-green-600" />
+          Marked as answer
+        </div>
+      )}
       <div
         className="grid gap-x-2"
         style={{

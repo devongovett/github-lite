@@ -115,12 +115,6 @@ function DiscussionCommentItem({comment, onDelete, onReply}: {
   return (
     <div className="flex flex-col gap-2">
       <div className="relative">
-        {comment.isAnswer && (
-          <div className="flex items-center gap-1.5 text-xs text-green-700 font-medium mb-1">
-            <CheckCircleIcon size={14} className="text-green-600" />
-            Marked as answer
-          </div>
-        )}
         <CommentCard data={comment} onDelete={() => onDelete(comment.id)} />
       </div>
       <div className="ml-8 flex flex-col gap-2 border-l-2 border-daw-gray-200 pl-4">
