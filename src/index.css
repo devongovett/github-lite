@@ -111,7 +111,11 @@ p > code {
 }
 
 diffs-container {
-  @apply rounded-xl;
+  @apply rounded-xl border border-daw-gray-200;
   overflow: clip;
+}
+
+.diff-code-view diffs-container {
+  border: none;
   box-shadow: var(--shadow);
 }

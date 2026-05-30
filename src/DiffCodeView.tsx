@@ -84,7 +84,7 @@ export function DiffCodeView({patch, threads = [], pendingComment, renderAnnotat
           }) as any
         })
       }}
-      className="h-full overflow-auto px-4 [&>div]:m-0!"
+      className="h-full overflow-auto px-4 [&>div]:m-0! diff-code-view"
       renderAnnotation={renderAnnotation}
     />
   );

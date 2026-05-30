@@ -86,7 +86,7 @@ export function NotificationsView() {
 }
 
 NotificationsView.preload = () => {
-  swrPreload(getNotificationsKey, fetchNotificationsPage);
+  swrPreload(['notifications', 1], fetchNotificationsPage);
 };
 
 function NotificationItem({item}: {item: Notification}) {

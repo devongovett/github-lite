@@ -8,6 +8,7 @@ import { DiscussionsView } from './Discussions';
 import { CommitsView } from './Commits';
 import { useQuery } from './client';
 import { useEffect } from 'react';
+import { SlideOverProvider } from './SlideOver';
 
 type TopRepo = {nameWithOwner: string, owner: {login: string, avatarUrl: string}};
 
@@ -31,21 +32,23 @@ export function App() {
   }
   return (
     <RouterProvider navigate={navigate}>
-      <RepoPreloader />
-      <div className="flex flex-col h-full">
-        <Toolbar />
-        <div className="flex flex-1 gap-1 overflow-hidden">
-          <SourceSelector />
-          <Routes>
-            <Route path="/notifications/*" element={<NotificationsView />} />
-            <Route path="/:owner/:repo/issues/*" element={<IssuesView />} />
-            <Route path="/:owner/:repo/pulls/*" element={<PullsView />} />
-            <Route path="/:owner/:repo/discussions/*" element={<DiscussionsView />} />
-            <Route path="/:owner/:repo/commits/*" element={<CommitsView />} />
-            <Route path="*" element={<Navigate to="/notifications" replace />} />
-          </Routes>
+      <SlideOverProvider>
+        <RepoPreloader />
+        <div className="flex flex-col h-full">
+          <Toolbar />
+          <div className="flex flex-1 gap-1 overflow-hidden">
+            <SourceSelector />
+            <Routes>
+              <Route path="/notifications/*" element={<NotificationsView />} />
+              <Route path="/:owner/:repo/issues/*" element={<IssuesView />} />
+              <Route path="/:owner/:repo/pulls/*" element={<PullsView />} />
+              <Route path="/:owner/:repo/discussions/*" element={<DiscussionsView />} />
+              <Route path="/:owner/:repo/commits/*" element={<CommitsView />} />
+              <Route path="*" element={<Navigate to="/notifications" replace />} />
+            </Routes>
+          </div>
         </div>
-      </div>
+      </SlideOverProvider>
     </RouterProvider>
   );
 }
@@ -57,7 +60,7 @@ function Login() {
 function RepoPreloader() {
   const {pathname} = useLocation();
   const {urlOwner, urlRepo} = parsePathParts(pathname);
-  
+
   useEffect(() => {
     const currentRepo = (urlOwner && urlRepo) ? `${urlOwner}/${urlRepo}` : (localStorage.getItem('github_lite_repo') ?? '');
     const [owner, repo] = currentRepo.split('/');
@@ -67,6 +70,7 @@ function RepoPreloader() {
       DiscussionsView.preload(owner, repo);
       CommitsView.preload(owner, repo);
     }
+    NotificationsView.preload();
   }, [urlOwner, urlRepo]);
 
   return null;

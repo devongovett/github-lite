@@ -7,6 +7,7 @@ import { Button, Dialog, DialogTrigger, Link, Popover, ToggleButton } from 'reac
 import { Avatar, Card } from './components';
 import { graphql } from './client';
 import { File } from '@pierre/diffs/react';
+import { GitHubLink } from './SlideOver';
 
 export function CommentCard({data, onDelete}: {data: Issue | PullRequest | IssueComment | Discussion | DiscussionComment, onDelete?: () => Promise<void>}) {
   let df = useDateFormatter({
@@ -118,8 +119,7 @@ export function CommentBody({children}: {children: string}) {
           props: {className: 'text-lg font-semibold my-3'}
         },
         a: {
-          component: (props: any) => <Link {...props} className="underline" target="_blank">{props.children}</Link>,
-          props: {target: '_blank'}
+          component: (props: any) => <GitHubLink {...props} className="underline">{props.children}</GitHubLink>
         },
         p: {
           props: {

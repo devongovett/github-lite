@@ -9,6 +9,7 @@ import { CommentCard, CommentBody, Reactions } from './CommentCard';
 import { Card, BranchName, GithubLabel, Icon, User, IssueStatus, Avatar, Status } from './components';
 import { CommentForm } from './CommentForm';
 import { graphql } from './client';
+import { GitHubLink } from './SlideOver';
 
 export function Timeline({items, onDeleteComment}: {items: (IssueTimelineItems | PullRequestTimelineItems | null)[], onDeleteComment?: (id: string) => Promise<void>}) {
   return <>
@@ -227,7 +228,7 @@ fragment MergedEventFragment on MergedEvent {
 `;
 
 function CommitLink({commit}: {commit: Commit}) {
-  return <Link target="_blank" href={commit.url} className="text-xs hover:underline"><code>{commit.abbreviatedOid}</code></Link>;
+  return <GitHubLink href={commit.url} className="text-xs hover:underline"><code>{commit.abbreviatedOid}</code></GitHubLink>;
 }
 
 function BranchDeleted({data}: {data: HeadRefDeletedEvent}) {
@@ -499,14 +500,14 @@ function CrossReferenced({data}: {data: CrossReferencedEvent}) {
       <Card gridArea="issue">
         <div className="flex gap-1 items-center">
           <div className="flex flex-col gap-1 flex-1 min-w-0">
-            <Link href={data.source.url} target="_blank" className="truncate font-semibold outline-none hover:underline focus-visible:underline">{data.source.title}</Link>
+            <GitHubLink href={data.source.url} className="truncate font-semibold outline-none hover:underline focus-visible:underline">{data.source.title}</GitHubLink>
             {data.isCrossRepository &&
               <div className="flex gap-1 items-center">
                 <Avatar src={data.source.repository.owner.avatarUrl} />
-                <Link target="_blank" href={data.source.url} className="text-daw-gray-700 outline-none hover:underline focus-visible:underline">{data.source.repository.owner.login}/{data.source.repository.name} #{data.source.number}</Link>
+                <GitHubLink href={data.source.url} className="text-daw-gray-700 outline-none hover:underline focus-visible:underline">{data.source.repository.owner.login}/{data.source.repository.name} #{data.source.number}</GitHubLink>
               </div>
             }
-            {!data.isCrossRepository && <Link target="_blank" href={data.source.url} className="text-daw-gray-700 outline-none hover:underline focus-visible:underline">#{data.source.number}</Link>}
+            {!data.isCrossRepository && <GitHubLink href={data.source.url} className="text-daw-gray-700 outline-none hover:underline focus-visible:underline">#{data.source.number}</GitHubLink>}
           </div>
           <IssueStatus data={data.source} />
         </div>
@@ -572,7 +573,9 @@ function Referenced({data}: {data: ReferencedEvent}) {
       <Icon className="bg-daw-gray-300 text-daw-gray-800"><CrossReferenceIcon /></Icon>
       <span><User actor={data.actor!} /> referenced this pull request</span>
       <div style={{gridArea: 'commit'}} className="flex gap-2">
-        <span className="flex-1 line-clamp-2 text-sm"><Link href={data.commit!.commitUrl} target="_blank" className="hover:underline">{data.commit!.message}</Link></span>
+        <span className="flex-1 line-clamp-2 text-sm">
+          <GitHubLink href={data.commit!.commitUrl} className="hover:underline">{data.commit!.message}</GitHubLink>
+        </span>
         {data.commit!.statusCheckRollup && <Status state={data.commit!.statusCheckRollup.state} />}
         <CommitLink commit={data.commit!} />
       </div>
@@ -610,7 +613,9 @@ function Committed({data}: {data: PullRequestCommit}) {
     <div className="flex gap-2 items-center">
       <Icon className="text-daw-gray-800"><GitCommitIcon /></Icon>
       <Avatar src={data.commit.author!.avatarUrl} />
-      <span className="flex-1 line-clamp-2 text-sm"><Link href={data.commit.commitUrl} target="_blank" className="hover:underline">{data.commit.message}</Link></span>
+      <span className="flex-1 line-clamp-2 text-sm">
+        <GitHubLink href={data.commit.commitUrl} className="hover:underline">{data.commit.message}</GitHubLink>
+      </span>
       {data.commit.statusCheckRollup && <Status state={data.commit.statusCheckRollup.state} />}
       <CommitLink commit={data.commit} />
     </div>
