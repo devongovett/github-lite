@@ -6,15 +6,8 @@ import {
   Button, Checkbox, Dialog, DialogTrigger, Input,
   Popover, Radio, SearchField, Tag, TagGroup, TagList
 } from 'react-aria-components';
-import { PullRequestPage } from './PullRequest';
-import { IssuePage } from './Issue';
 
 export type RepoLabel = RestEndpointMethodTypes["issues"]["listLabelsForRepo"]["response"]["data"][0];
-export type SearchItem = RestEndpointMethodTypes["search"]["issuesAndPullRequests"]["response"]["data"]["items"][0];
-export type SearchKey = readonly [string, string, string, string, number];
-export type SearchPageResult = {items: SearchItem[], hasNext: boolean};
-
-export const PER_PAGE = 100;
 
 export const DISCUSSION_SORT_OPTIONS = [
   { value: '', label: 'Latest activity' },
@@ -35,45 +28,11 @@ export const SORT_OPTIONS = [
   { value: 'reactions-eyes-desc', label: '👀 Eyes' },
 ];
 
-export function buildSearchQuery(
-  type: 'issue' | 'pr',
-  owner: string, repo: string,
-  search: string, author: string, status: string, labels: string[],
-  extra: string[] = []
-): string {
-  const parts = [`repo:${owner}/${repo}`, `is:${type}`];
-  if (status !== 'all') parts.push(`is:${status}`);
-  parts.push(...extra);
-  if (author) parts.push(`author:${author}`);
-  for (const label of labels) parts.push(`label:"${label}"`);
-  if (search) parts.push(search);
-  return parts.join(' ');
-}
-
 export async function fetchLabels([, owner, repo]: readonly ['labels', string, string]) {
   let res = await github.issues.listLabelsForRepo({owner, repo, per_page: 100});
   return res.data;
 }
 
-export async function fetchSearchPage([, query, sortBy, sortDir, page]: SearchKey): Promise<SearchPageResult> {
-  let res = await github.search.issuesAndPullRequests({
-    q: query,
-    sort: sortBy as any,
-    order: sortDir as 'asc' | 'desc',
-    per_page: PER_PAGE,
-    page
-  });
-  const hasNext = page * PER_PAGE < res.data.total_count;
-  for (let item of res.data.items.slice(0, 10)) {
-    let [owner, repo] = item.repository_url.split('/').slice(-2);
-    if (item.pull_request) {
-      PullRequestPage.preload(owner, repo, item.number);
-    } else {
-      IssuePage.preload(owner, repo, item.number);
-    }
-  }
-  return {items: res.data.items, hasNext};
-}
 
 // --- Shared UI components ---
 

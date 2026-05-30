@@ -6,14 +6,49 @@ import { useState, useCallback, useEffect } from 'react';
 import { IssueClosedIcon, IssueOpenedIcon } from '@primer/octicons-react';
 import { List, ListItem, EmptyDetail } from './List';
 import { Button, Input, RadioGroup, TextField } from 'react-aria-components';
+import { graphql } from './client';
 import {
   FilterSection, RadioItem, LabelTagGroup, SearchBar, FilterPopoverWrapper,
-  fetchLabels, fetchSearchPage, buildSearchQuery,
-  SORT_OPTIONS,
-  type RepoLabel, type SearchItem, type SearchKey, type SearchPageResult
+  fetchLabels, SORT_OPTIONS,
+  type RepoLabel,
 } from './Filters';
+import { Issue } from '@octokit/graphql-schema';
 
-type IssuePageResult = SearchPageResult;
+type IssuesPageResult = {
+  nodes: Issue[];
+  pageInfo: { hasNextPage: boolean; endCursor: string | null };
+};
+
+type IssuesKey = readonly ['issues', string, string];
+
+const SEARCH_QUERY = `
+query SearchIssues($q: String!, $cursor: String) {
+  search(query: $q, type: ISSUE, first: 50, after: $cursor) {
+    pageInfo { hasNextPage endCursor }
+    nodes {
+      ... on Issue {
+        id number title state
+        author { login }
+      }
+    }
+  }
+}
+`;
+
+async function fetchIssuesPage([, query, cursor]: IssuesKey): Promise<IssuesPageResult> {
+  const data = await graphql<{search: IssuesPageResult}>(SEARCH_QUERY, {q: query, cursor: cursor || undefined});
+  return data.search;
+}
+
+function buildIssuesQuery(owner: string, repo: string, search: string, author: string, status: string, labels: string[], sort: string): string {
+  const parts = [`repo:${owner}/${repo}`, 'is:issue'];
+  if (status !== 'all') parts.push(`is:${status}`);
+  if (author) parts.push(`author:${author}`);
+  for (const label of labels) parts.push(`label:"${label}"`);
+  if (search) parts.push(search);
+  if (sort) parts.push(`sort:${sort}`);
+  return parts.join(' ');
+}
 
 const TYPE_LABEL_NAMES = ['bug', 'enhancement', 'feature', 'feature request', 'question', 'documentation'];
 
@@ -41,21 +76,18 @@ export function IssuesView() {
   const {pathname} = useLocation();
   const {data: availableLabels} = useSWR(['labels', owner, repo] as const, fetchLabels);
 
-  const getKey = useCallback((pageIndex: number, prev: IssuePageResult | null) => {
-    if (prev && !prev.hasNext) return null;
-    const lastDash = sort.lastIndexOf('-');
-    const sortBy = sort.slice(0, lastDash);
-    const sortDir = sort.slice(lastDash + 1);
+  const getKey = useCallback((pageIndex: number, prev: IssuesPageResult | null): IssuesKey | null => {
+    if (prev && !prev.pageInfo.hasNextPage) return null;
     const labels = [...selectedLabels, ...(issueType ? [issueType] : [])];
-    const query = buildSearchQuery('issue', owner, repo, search, author, status, labels);
-    return ['issues', query, sortBy, sortDir, pageIndex + 1] as SearchKey;
+    const query = buildIssuesQuery(owner, repo, search, author, status, labels, sort);
+    return ['issues', query, prev?.pageInfo.endCursor ?? ''];
   }, [owner, repo, status, selectedLabels, issueType, sort, search, author]);
 
-  const {data, size, setSize, isLoading, isValidating, error} = useSWRInfinite(getKey, fetchSearchPage);
+  const {data, size, setSize, isLoading, isValidating, error} = useSWRInfinite(getKey, fetchIssuesPage);
 
-  const issues = data?.flatMap(p => p.items) ?? [];
+  const issues = data?.flatMap(p => p.nodes) ?? [];
   const isLoadingMore = !isLoading && isValidating && (data?.length ?? 0) < size;
-  const hasMore = !data || data[data.length - 1]?.hasNext !== false;
+  const hasMore = !data || data[data.length - 1]?.pageInfo.hasNextPage !== false;
 
   const activeFilterCount = [
     status !== 'open',
@@ -111,8 +143,8 @@ export function IssuesView() {
 }
 
 IssuesView.preload = async function (owner: string, repo: string) {
-  const query = buildSearchQuery('issue', owner, repo, '', '', 'open', []);
-  swrPreload(['issues', query, 'created', 'desc', 1] as const, fetchSearchPage);
+  const query = buildIssuesQuery(owner, repo, '', '', 'open', [], 'created-desc');
+  swrPreload(['issues', query, ''] as const, fetchIssuesPage);
 };
 
 // --- Filter popover ---
@@ -197,19 +229,19 @@ function IssueFilterPopover({
 
 // --- List items ---
 
-function IssueListItem({issue, owner, repo}: {issue: SearchItem, owner: string, repo: string}) {
+function IssueListItem({issue, owner, repo}: {issue: Issue, owner: string, repo: string}) {
   return (
     <ListItem
       id={`/${owner}/${repo}/issues/${issue.number}`}
       href={`/${owner}/${repo}/issues/${issue.number}`}
       textValue={issue.title}
       onHoverStart={() => IssuePage.preload(owner, repo, issue.number)}
-      icon={issue.state === 'open'
+      icon={issue.state === 'OPEN'
         ? <IssueOpenedIcon size={14} className="text-green-600 group-aria-selected:text-daw-white" />
         : <IssueClosedIcon size={14} className="text-purple-600 group-aria-selected:text-daw-white" />
       }
       label={issue.title}
-      description={`#${issue.number} opened by ${issue.user?.login}`}
+      description={`#${issue.number} opened by ${issue.author?.login}`}
     />
   );
 }

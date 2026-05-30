@@ -6,14 +6,51 @@ import { useState, useCallback, useEffect } from 'react';
 import { GitMergeIcon, GitPullRequestClosedIcon, GitPullRequestDraftIcon, GitPullRequestIcon } from '@primer/octicons-react';
 import { List, ListItem, EmptyDetail } from './List';
 import { Button, Input, RadioGroup, TextField } from 'react-aria-components';
+import { graphql } from './client';
+import { Status } from './components';
 import {
   CheckboxFilter, FilterSection, RadioItem, LabelTagGroup, SearchBar, FilterPopoverWrapper,
-  fetchLabels, fetchSearchPage, buildSearchQuery,
-  SORT_OPTIONS,
-  type SearchItem, type SearchKey, type SearchPageResult
+  fetchLabels, SORT_OPTIONS,
 } from './Filters';
+import { PullRequest } from '@octokit/graphql-schema';
 
-type PullPageResult = SearchPageResult;
+type PullsPageResult = {
+  nodes: PullRequest[];
+  pageInfo: { hasNextPage: boolean; endCursor: string | null };
+};
+
+type PullsKey = readonly ['pulls', string, string];
+
+const SEARCH_QUERY = `
+query SearchPullRequests($q: String!, $cursor: String) {
+  search(query: $q, type: ISSUE, first: 50, after: $cursor) {
+    pageInfo { hasNextPage endCursor }
+    nodes {
+      ... on PullRequest {
+        id number title state isDraft
+        author { login }
+        viewerLatestReview { state }
+      }
+    }
+  }
+}
+`;
+
+async function fetchPullsPage([, query, cursor]: PullsKey): Promise<PullsPageResult> {
+  const data = await graphql<{search: PullsPageResult}>(SEARCH_QUERY, {q: query, cursor: cursor || undefined});
+  return data.search;
+}
+
+function buildPullsQuery(owner: string, repo: string, search: string, author: string, status: string, labels: string[], sort: string, draft: boolean): string {
+  const parts = [`repo:${owner}/${repo}`, 'is:pr'];
+  if (status !== 'all') parts.push(`is:${status}`);
+  if (draft) parts.push('is:draft');
+  if (author) parts.push(`author:${author}`);
+  for (const label of labels) parts.push(`label:"${label}"`);
+  if (search) parts.push(search);
+  if (sort) parts.push(`sort:${sort}`);
+  return parts.join(' ');
+}
 
 const STATUS_OPTIONS = [
   { value: 'open', label: 'Open' },
@@ -46,21 +83,17 @@ export function PullsView() {
   const {pathname} = useLocation();
   const {data: availableLabels} = useSWR(['labels', owner, repo] as const, fetchLabels);
 
-  const getKey = useCallback((pageIndex: number, prev: PullPageResult | null) => {
-    if (prev && !prev.hasNext) return null;
-    const lastDash = sort.lastIndexOf('-');
-    const sortBy = sort.slice(0, lastDash);
-    const sortDir = sort.slice(lastDash + 1);
-    const extra = draft ? ['is:draft'] : [];
-    const query = buildSearchQuery('pr', owner, repo, search, author, status, selectedLabels, extra);
-    return ['pulls', query, sortBy, sortDir, pageIndex + 1] as SearchKey;
+  const getKey = useCallback((pageIndex: number, prev: PullsPageResult | null): PullsKey | null => {
+    if (prev && !prev.pageInfo.hasNextPage) return null;
+    const query = buildPullsQuery(owner, repo, search, author, status, selectedLabels, sort, draft);
+    return ['pulls', query, prev?.pageInfo.endCursor ?? ''];
   }, [owner, repo, status, draft, selectedLabels, sort, search, author]);
 
-  const {data, size, setSize, isLoading, isValidating, error} = useSWRInfinite(getKey, fetchSearchPage);
+  const {data, size, setSize, isLoading, isValidating, error} = useSWRInfinite(getKey, fetchPullsPage);
 
-  const pulls = data?.flatMap(p => p.items) ?? [];
+  const pulls = data?.flatMap(p => p.nodes) ?? [];
   const isLoadingMore = !isLoading && isValidating && (data?.length ?? 0) < size;
-  const hasMore = !data || data[data.length - 1]?.hasNext !== false;
+  const hasMore = !data || data[data.length - 1]?.pageInfo.hasNextPage !== false;
 
   const activeFilterCount = [
     status !== 'open',
@@ -182,25 +215,31 @@ function PullFilterPopover({
 }
 
 PullsView.preload = async function (owner: string, repo: string) {
-  const query = buildSearchQuery('pr', owner, repo, '', '', 'open', []);
-  swrPreload(['pulls', query, 'created', 'desc', 1] as const, fetchSearchPage);
+  const query = buildPullsQuery(owner, repo, '', '', 'open', [], 'created-desc', false);
+  swrPreload(['pulls', query, ''] as const, fetchPullsPage);
 };
 
 // --- List items ---
 
-function PullListItem({pull, owner, repo}: {pull: SearchItem, owner: string, repo: string}) {
-  const isMerged = !!pull.pull_request?.merged_at;
-  const isDraft = !!pull.draft;
+function PullListItem({pull, owner, repo}: {pull: PullRequest, owner: string, repo: string}) {
+  const isMerged = pull.state === 'MERGED';
+  const isDraft = pull.isDraft;
 
   let icon;
   if (isDraft) {
     icon = <GitPullRequestDraftIcon size={14} className="text-neutral-500 group-aria-selected:text-daw-white" />;
-  } else if (pull.state === 'open') {
+  } else if (pull.state === 'OPEN') {
     icon = <GitPullRequestIcon size={14} className="text-green-600 group-aria-selected:text-daw-white" />;
   } else if (isMerged) {
     icon = <GitMergeIcon size={14} className="text-purple-600 group-aria-selected:text-daw-white" />;
   } else {
     icon = <GitPullRequestClosedIcon size={14} className="text-red-600 group-aria-selected:text-daw-white" />;
+  }
+
+  const reviewState = pull.viewerLatestReview?.state;
+  let trailingIcon = null;
+  if (reviewState === 'APPROVED' || reviewState === 'CHANGES_REQUESTED' || reviewState === 'COMMENTED') {
+    trailingIcon = <Status state={reviewState as any} />;
   }
 
   return (
@@ -211,7 +250,8 @@ function PullListItem({pull, owner, repo}: {pull: SearchItem, owner: string, rep
       onHoverStart={() => PullRequestPage.preload(owner, repo, pull.number)}
       icon={icon}
       label={pull.title}
-      description={`#${pull.number} by ${pull.user?.login}`}
+      description={`#${pull.number} by ${pull.author?.login}`}
+      trailingIcon={trailingIcon}
     />
   );
 }
