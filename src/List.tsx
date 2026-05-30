@@ -75,7 +75,7 @@ export interface ListItemProps {
   href: string;
   textValue: string;
   onHoverStart?: () => void;
-  icon: ReactNode;
+  icon?: ReactNode;
   label: ReactNode;
   description: ReactNode;
   trailingIcon?: ReactNode;
@@ -88,11 +88,14 @@ export function ListItem({id, href, textValue, onHoverStart, icon, label, descri
       href={href}
       textValue={textValue}
       onHoverStart={onHoverStart}
-      className={`group grid ${trailingIcon != null ? 'grid-cols-[auto_1fr_auto]' : 'grid-cols-[auto_1fr]'} gap-y-0.5 gap-x-3 items-baseline rounded-md cursor-default px-3 py-2 hover:bg-daw-gray-200 selected:bg-daw-gray-900 hover:aria-selected:bg-daw-gray-900 selected:text-daw-white outline-none focus-visible:outline-2 outline-blue-600 outline-offset-2`}>
-      <div className="col-start-1">{icon}</div>
-      <Text slot="label" className="col-start-2 text-sm font-medium line-clamp-2">{label}</Text>
-      <Text slot="description" className="text-xs col-start-2 text-daw-gray-600 group-aria-selected:text-daw-gray-300 truncate">{description}</Text>
-      {trailingIcon != null && <div className="col-start-3 row-start-1 self-baseline">{trailingIcon}</div>}
+      style={{
+        gridTemplateColumns: [icon ? 'auto' : null, '1fr', trailingIcon ? 'auto' : null].filter(Boolean).join(' ')
+      }}
+      className={`group grid gap-y-0.5 gap-x-3 items-baseline rounded-md cursor-default px-3 py-2 hover:bg-daw-gray-200 selected:bg-daw-gray-900 hover:aria-selected:bg-daw-gray-900 selected:text-daw-white outline-none focus-visible:outline-2 outline-blue-600 outline-offset-2`}>
+      {icon && <div className="col-start-1">{icon}</div>}
+      <Text slot="label" style={{gridColumnStart: icon ? 2 : 1}} className="col-start-2 col-span-2 text-sm font-medium line-clamp-2">{label}</Text>
+      <Text slot="description" style={{gridColumnStart: icon ? 2 : 1}} className="self-center text-xs text-daw-gray-600 group-aria-selected:text-daw-gray-300 truncate">{description}</Text>
+      {trailingIcon != null && <div style={{gridColumnStart: icon ? 3 : 2}} className="row-start-2 self-center">{trailingIcon}</div>}
     </ListBoxItem>
   );
 }

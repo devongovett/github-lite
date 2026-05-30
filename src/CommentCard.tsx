@@ -150,7 +150,7 @@ export function CommentBody({children}: {children: string}) {
   );
 }
 
-const emojis: Record<ReactionContent, string> = {
+export const emojis: Record<ReactionContent, string> = {
   THUMBS_UP: '👍',
   THUMBS_DOWN: '👎',
   CONFUSED: '😕',

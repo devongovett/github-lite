@@ -1,5 +1,5 @@
 import { Actor, CheckConclusionState, Issue, PullRequest, PullRequestReviewDecision, PullRequestReviewState, StatusState } from '@octokit/graphql-schema';
-import { AlertIcon, CheckIcon, CommentIcon, StopIcon, XIcon } from '@primer/octicons-react';
+import { AlertIcon, CheckIcon, CommentIcon, StopIcon, HourglassIcon, XIcon } from '@primer/octicons-react';
 import { DOMAttributes, ReactNode, cloneElement } from 'react';
 import { Link } from 'react-aria-components';
 
@@ -56,20 +56,20 @@ let checkIcons = {
   EXPECTED: null,
   PENDING: null,
   ERROR: null,
-  FAILURE: <XIcon className="text-daw-red-500" />,
-  ACTION_REQUIRED: <AlertIcon className="text-daw-yellow-600" />,
-  CANCELLED: <StopIcon className="text-daw-gray-500" />,
-  STARTUP_FAILURE: <XIcon className="text-daw-red-500" />,
-  TIMED_OUT: <XIcon className="text-daw-red-500" />,
-  SUCCESS: <CheckIcon className="text-daw-green-500" />,
+  FAILURE: <XIcon className="text-daw-red-500 group-selected:text-daw-white" />,
+  ACTION_REQUIRED: <AlertIcon className="text-daw-yellow-600 group-selected:text-daw-white" />,
+  CANCELLED: <StopIcon className="text-daw-gray-500 group-selected:text-daw-white" />,
+  STARTUP_FAILURE: <XIcon className="text-daw-red-500 group-selected:text-daw-white" />,
+  TIMED_OUT: <XIcon className="text-daw-red-500 group-selected:text-daw-white" />,
+  SUCCESS: <CheckIcon className="text-daw-green-500 group-selected:text-daw-white" />,
   NEUTRAL: null,
   STALE: null,
   SKIPPED: null,
 
-  CHANGES_REQUESTED: <XIcon className="text-daw-red-500" />,
-  REVIEW_REQUIRED: <XIcon className="text-daw-red-500" />,
-  APPROVED: <CheckIcon className="text-daw-green-500" />,
-  COMMENTED: <CommentIcon className="text-daw-gray-500" />,
+  CHANGES_REQUESTED: <XIcon className="text-daw-red-500 group-selected:text-daw-white" />,
+  REVIEW_REQUIRED: <XIcon className="text-daw-yellow-500 group-selected:text-daw-white" />,
+  APPROVED: <CheckIcon className="text-daw-green-500 group-selected:text-daw-white" />,
+  COMMENTED: <CommentIcon className="text-daw-gray-500 group-selected:text-daw-white" />,
   DISMISSED: null
 };
 

@@ -337,7 +337,7 @@ function PullHeader({data}: {data: PullRequest}) {
   );
 }
 
-let reviewDecisionMessages: Record<PullRequestReviewDecision, string> = {
+export let reviewDecisionMessages: Record<PullRequestReviewDecision, string> = {
   APPROVED: 'Approved',
   REVIEW_REQUIRED: 'Review required',
   CHANGES_REQUESTED: 'Changes requested'

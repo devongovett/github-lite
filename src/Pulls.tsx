@@ -1,13 +1,13 @@
-import { PullRequestPage } from './PullRequest';
+import { PullRequestPage, reviewDecisionMessages } from './PullRequest';
 import { Route, Routes, useLocation, useParams } from 'react-router-dom';
 import useSWRInfinite from 'swr/infinite';
 import useSWR, { preload as swrPreload } from 'swr';
 import { useState, useCallback, useEffect } from 'react';
-import { GitMergeIcon, GitPullRequestClosedIcon, GitPullRequestDraftIcon, GitPullRequestIcon } from '@primer/octicons-react';
+import { GitMergeIcon, GitPullRequestClosedIcon, GitPullRequestDraftIcon, CodeReviewIcon } from '@primer/octicons-react';
 import { List, ListItem, EmptyDetail } from './List';
 import { Button, Input, RadioGroup, TextField } from 'react-aria-components';
 import { graphql } from './client';
-import { Status } from './components';
+import { Avatar, Status } from './components';
 import {
   CheckboxFilter, FilterSection, RadioItem, LabelTagGroup, SearchBar, FilterPopoverWrapper,
   fetchLabels, SORT_OPTIONS,
@@ -28,8 +28,14 @@ query SearchPullRequests($q: String!, $cursor: String) {
     nodes {
       ... on PullRequest {
         id number title state isDraft
-        author { login }
+        author { login avatarUrl }
         viewerLatestReview { state }
+        reviewDecision
+        reviews(last:100) {
+          nodes {
+            state
+          }
+        }
       }
     }
   }
@@ -224,22 +230,36 @@ PullsView.preload = async function (owner: string, repo: string) {
 function PullListItem({pull, owner, repo}: {pull: PullRequest, owner: string, repo: string}) {
   const isMerged = pull.state === 'MERGED';
   const isDraft = pull.isDraft;
-
-  let icon;
-  if (isDraft) {
-    icon = <GitPullRequestDraftIcon size={14} className="text-neutral-500 group-aria-selected:text-daw-white" />;
-  } else if (pull.state === 'OPEN') {
-    icon = <GitPullRequestIcon size={14} className="text-green-600 group-aria-selected:text-daw-white" />;
-  } else if (isMerged) {
-    icon = <GitMergeIcon size={14} className="text-purple-600 group-aria-selected:text-daw-white" />;
-  } else {
-    icon = <GitPullRequestClosedIcon size={14} className="text-red-600 group-aria-selected:text-daw-white" />;
-  }
-
   const reviewState = pull.viewerLatestReview?.state;
-  let trailingIcon = null;
-  if (reviewState === 'APPROVED' || reviewState === 'CHANGES_REQUESTED' || reviewState === 'COMMENTED') {
-    trailingIcon = <Status state={reviewState as any} />;
+
+  let avatar = <Avatar src={pull.author!.avatarUrl} />;
+  let description;
+  if (isDraft) {
+    description = <span className="flex gap-1 items-center"><GitPullRequestDraftIcon size={14} className="text-neutral-500 group-aria-selected:text-daw-white" />Draft</span>;
+  } else if (pull.state === 'OPEN') {
+    if (reviewState === 'APPROVED' || reviewState === 'CHANGES_REQUESTED' || reviewState === 'COMMENTED') {
+      let message = reviewState === 'CHANGES_REQUESTED' ? 'requested changes' : reviewState.toLowerCase();
+      description = <span className="flex gap-1 items-center"><Status state={reviewState as any} />You {message}</span>;
+    } else {
+      let message = reviewDecisionMessages[pull.reviewDecision!];
+      let numReviews = pull.reviews!.nodes!.length;
+      if (pull.reviewDecision === 'REVIEW_REQUIRED' && numReviews > 0) {
+        let approvals = pull.reviews!.nodes!.filter(r => r!.state === 'APPROVED').length;
+        let changesRequested = pull.reviews!.nodes!.filter(r => r!.state === 'CHANGES_REQUESTED').length;
+        if (approvals > 0 && changesRequested === 0) {
+          message = `${approvals} ${approvals === 1 ? 'approval' : 'approvals'}`;
+        } else if (changesRequested > 0 && approvals === 0) {
+          message = `${changesRequested} requested changes`;
+        } else {
+          message = `${numReviews} ${numReviews === 1 ? 'review' : 'reviews'}`
+        }
+      }
+      description = <span className="flex gap-1 items-center"><Status state={pull.reviewDecision!} />{message}</span>;
+    }
+  } else if (isMerged) {
+    description = <span className="flex gap-1 items-center"><GitMergeIcon size={14} className="text-purple-600 group-aria-selected:text-daw-white" />Merged</span>;
+  } else {
+    description = <span className="flex gap-1 items-center"><GitPullRequestClosedIcon size={14} className="text-red-600 group-aria-selected:text-daw-white" />Closed</span>;
   }
 
   return (
@@ -248,10 +268,9 @@ function PullListItem({pull, owner, repo}: {pull: PullRequest, owner: string, re
       href={`/${owner}/${repo}/pulls/${pull.number}`}
       textValue={pull.title}
       onHoverStart={() => PullRequestPage.preload(owner, repo, pull.number)}
-      icon={icon}
       label={pull.title}
-      description={`#${pull.number} by ${pull.author?.login}`}
-      trailingIcon={trailingIcon}
+      description={description}
+      trailingIcon={avatar}
     />
   );
 }

@@ -1,5 +1,5 @@
 import { RestEndpointMethodTypes } from '@octokit/rest';
-import { GitBranchIcon, GitCommitIcon } from '@primer/octicons-react';
+import { GitBranchIcon } from '@primer/octicons-react';
 import { useDateFormatter } from 'react-aria';
 import { Button, ListBox, ListBoxItem, Popover, Select } from 'react-aria-components';
 import { Route, Routes, useLocation, useParams } from 'react-router-dom';
@@ -128,7 +128,6 @@ function CommitListItem({commit, owner, repo}: {commit: CommitItem, owner: strin
       href={`/${owner}/${repo}/commits/${commit.sha}`}
       textValue={title}
       onHoverStart={() => CommitPage.preload(owner, repo, commit.sha)}
-      icon={<GitCommitIcon size={14} className="text-daw-gray-500 group-aria-selected:text-daw-white" />}
       label={title}
       description={`${author} · ${date}`}
     />
