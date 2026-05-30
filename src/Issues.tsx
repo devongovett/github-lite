@@ -14,7 +14,7 @@ import {
 } from './Filters';
 import { Issue } from '@octokit/graphql-schema';
 import { emojis } from './CommentCard';
-import { GithubLabel } from './components';
+import { GithubLabel, IssueTypeBadge } from './components';
 
 type IssuesPageResult = {
   nodes: Issue[];
@@ -241,28 +241,12 @@ function IssueFilterPopover({
 
 // --- List items ---
 //
-const ISSUE_TYPE_COLORS = {
-  BLUE: 'bg-blue-400/20 text-blue-600 group-selected:text-blue-300 dark:text-blue-300 dark:group-selected:text-blue-600 border-blue-400/20',
-  GRAY: 'bg-neutral-400/20 text-neutral-600 group-selected:text-neutral-300 dark:text-neutral-300 dark:group-selected:text-neutral-600 border-neutral-400/20',
-  GREEN: 'bg-green-400/20 text-green-600 group-selected:text-green-300 dark:text-green-300 dark:group-selected:text-green-600 border-green-400/20',
-  ORANGE: 'bg-orange-400/20 text-orange-600 group-selected:text-orange-300 dark:text-orange-300 dark:group-selected:text-orange-600 border-orange-400/20',
-  PINK: 'bg-pink-400/20 text-pink-600 group-selected:text-pink-300 dark:text-pink-300 dark:group-selected:text-pink-600 border-pink-400/20',
-  PURPLE: 'bg-purple-400/20 text-purple-600 group-selected:text-purple-300 dark:text-purple-300 dark:group-selected:text-purple-600 border-purple-400/20',
-  RED: 'bg-red-400/20 text-red-600 group-selected:text-red-300 dark:text-red-300 dark:group-selected:text-red-600 border-red-400/20',
-  YELLOW: 'bg-yellow-400/20 text-yellow-600 group-selected:text-yellow-300 dark:text-yellow-300 dark:group-selected:text-yellow-600 border-yellow-400/20',
-} as const;
 
 function IssueListItem({ issue, owner, repo }: { issue: Issue, owner: string, repo: string }) {
   let description;
   let reactions = issue.reactionGroups!.filter(r => r.reactors.totalCount > 0).map((r, i) => <span key={i}>{emojis[r.content]} {r.reactors.totalCount}</span>);
   let type = (issue as any).issueType;
-  let issueType = type
-    ? (
-      <span
-        className={`px-2 rounded-full text-2xs border ${ISSUE_TYPE_COLORS[type.color as keyof typeof ISSUE_TYPE_COLORS]}`}>
-        {type.name}
-      </span>
-    ) : null;
+  let issueType = type ? <IssueTypeBadge issueType={type} className="text-2xs" /> : null;
   let commentCount = <>{issueType}<span><CommentIcon className="w-3 h-3 inline mr-1" />{issue.comments!.totalCount}</span></>;
   if (reactions.length) {
     description = <span className="flex gap-2 items-center">{commentCount} {reactions}</span>

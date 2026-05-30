@@ -1,5 +1,5 @@
 import { Actor, CheckConclusionState, Issue, PullRequest, PullRequestReviewDecision, PullRequestReviewState, StatusState } from '@octokit/graphql-schema';
-import { AlertIcon, CheckIcon, CommentIcon, StopIcon, HourglassIcon, XIcon } from '@primer/octicons-react';
+import { AlertIcon, CheckIcon, CommentIcon, StopIcon, HourglassIcon, XIcon, FeedMergedIcon, FeedPullRequestClosedIcon, FeedPullRequestOpenIcon, FeedPullRequestDraftIcon, GitMergeIcon, GitPullRequestClosedIcon, GitPullRequestIcon, GitPullRequestDraftIcon } from '@primer/octicons-react';
 import { DOMAttributes, ReactNode, cloneElement } from 'react';
 import { Link } from 'react-aria-components';
 
@@ -23,10 +23,20 @@ let states = {
   DRAFT: 'bg-daw-gray-200 border-daw-gray-300 text-daw-gray-800'
 };
 
-export function IssueStatus({data}: {data: PullRequest | Issue}) {
+let statusIcons = {
+  MERGED: <GitMergeIcon className="text-daw-purple-700" />,
+  CLOSED: <GitPullRequestClosedIcon className="text-daw-red-700" />,
+  OPEN: <GitPullRequestIcon className="text-daw-green-700" />,
+  DRAFT: <GitPullRequestDraftIcon className="text-daw-gray-700" />
+};
+
+export function IssueStatus({data, type}: {data: PullRequest | Issue, type?: 'label' | 'icon'}) {
   let state: keyof typeof states = data.state;
   if ('isDraft' in data && data.isDraft) {
     state = 'DRAFT';
+  }
+  if (type === 'icon') {
+    return statusIcons[state];
   }
   return <span className={`capitalize w-fit px-2 py-0.5 rounded border text-sm font-medium ${states[state]}`}>{state.toLowerCase()}</span>
 }
@@ -105,9 +115,29 @@ export function Icon({className, children}: {className: string, children: ReactN
 export function GithubLabel({color, children}: {color: string, children: ReactNode}) {
   return (
     <span
-      className="px-3 py-0.5 text-black rounded-full text-xs font-semibold border"
-      style={{background: `#${color}66`, borderColor: `#${color}66`, color: `color-mix(in srgb, #${color}, black 70%)`}}>
+      className="px-2 py-0.5 text-black rounded-full text-xs font-semibold border"
+      style={{background: `#${color}66`, borderColor: `#${color}66`, color: `color-mix(in srgb, #${color}, light-dark(black, white) 70%)`}}>
       {children}
+    </span>
+  );
+}
+
+export const ISSUE_TYPE_COLORS = {
+  BLUE: 'bg-blue-400/20 text-blue-600 group-selected:text-blue-300 dark:text-blue-300 dark:group-selected:text-blue-600 border-blue-400/20',
+  GRAY: 'bg-neutral-400/20 text-neutral-600 group-selected:text-neutral-300 dark:text-neutral-300 dark:group-selected:text-neutral-600 border-neutral-400/20',
+  GREEN: 'bg-green-400/20 text-green-600 group-selected:text-green-300 dark:text-green-300 dark:group-selected:text-green-600 border-green-400/20',
+  ORANGE: 'bg-orange-400/20 text-orange-600 group-selected:text-orange-300 dark:text-orange-300 dark:group-selected:text-orange-600 border-orange-400/20',
+  PINK: 'bg-pink-400/20 text-pink-600 group-selected:text-pink-300 dark:text-pink-300 dark:group-selected:text-pink-600 border-pink-400/20',
+  PURPLE: 'bg-purple-400/20 text-purple-600 group-selected:text-purple-300 dark:text-purple-300 dark:group-selected:text-purple-600 border-purple-400/20',
+  RED: 'bg-red-400/20 text-red-600 group-selected:text-red-300 dark:text-red-300 dark:group-selected:text-red-600 border-red-400/20',
+  YELLOW: 'bg-yellow-400/20 text-yellow-600 group-selected:text-yellow-300 dark:text-yellow-300 dark:group-selected:text-yellow-600 border-yellow-400/20',
+} as const;
+
+export function IssueTypeBadge({issueType, className}: {issueType: {name: string, color: string}, className?: string}) {
+  let colors = ISSUE_TYPE_COLORS[issueType.color as keyof typeof ISSUE_TYPE_COLORS] ?? ISSUE_TYPE_COLORS.GRAY;
+  return (
+    <span className={`px-2 font-semibold rounded-full border ${colors}${className ? ` ${className}` : ''}`}>
+      {issueType.name}
     </span>
   );
 }
