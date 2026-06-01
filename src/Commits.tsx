@@ -127,7 +127,7 @@ function CommitListItem({commit, owner, repo}: {commit: CommitItem, owner: strin
       id={`/${owner}/${repo}/commits/${commit.sha}`}
       href={`/${owner}/${repo}/commits/${commit.sha}`}
       textValue={title}
-      onHoverStart={() => CommitPage.preload(owner, repo, commit.sha)}
+      onPreload={() => CommitPage.preload(owner, repo, commit.sha)}
       label={title}
       description={`${author} · ${date}`}
     />

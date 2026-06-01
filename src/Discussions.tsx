@@ -269,7 +269,7 @@ function DiscussionListItem({discussion, owner, repo}: {discussion: DiscussionIt
       id={`/${owner}/${repo}/discussions/${discussion.number}`}
       href={`/${owner}/${repo}/discussions/${discussion.number}`}
       textValue={discussion.title}
-      onHoverStart={() => preload(DiscussionPage.query(), {owner, repo, number: discussion.number})}
+      onPreload={() => preload(DiscussionPage.query(), {owner, repo, number: discussion.number})}
       icon={icon}
       label={discussion.title}
       description={`#${discussion.number} by ${discussion.author?.login}`}

@@ -24,9 +24,6 @@ async function fetchNotificationsPage([, page]: readonly [string, number]): Prom
     page, per_page: PER_PAGE, all: true,
     headers: { 'If-None-Match': '' }
   });
-  if (page === 1) {
-    for (let item of res.data.slice(0, 10)) preloadNotification(item);
-  }
   return res.data;
 }
 
@@ -95,7 +92,7 @@ function NotificationItem({item}: {item: Notification}) {
       id={`/notifications/${item.id}`}
       href={`/notifications/${item.id}`}
       textValue={item.subject.title}
-      onHoverStart={() => preloadNotification(item)}
+      onPreload={() => preloadNotification(item)}
       icon={
         <div className="w-[10px] h-[10px]">
           {item.unread && <div aria-label="Unread" role="status" className="rounded-full bg-blue-500 w-full h-full" />}

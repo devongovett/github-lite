@@ -1,6 +1,6 @@
 import { Collection, ListBox, ListBoxItem, ListBoxLoadMoreItem, Text } from 'react-aria-components';
 import { Virtualizer, ListLayout } from 'react-aria-components/Virtualizer';
-import { ReactNode } from 'react';
+import { ReactNode, useRef, useEffect, useCallback } from 'react';
 
 export function EmptyDetail({text}: {text: string}) {
   return (
@@ -74,20 +74,41 @@ export interface ListItemProps {
   id: string;
   href: string;
   textValue: string;
-  onHoverStart?: () => void;
+  onPreload?: () => void;
   icon?: ReactNode;
   label: ReactNode;
   description: ReactNode;
   trailingIcon?: ReactNode;
 }
 
-export function ListItem({id, href, textValue, onHoverStart, icon, label, description, trailingIcon}: ListItemProps) {
+export function ListItem({id, href, textValue, onPreload, icon, label, description, trailingIcon}: ListItemProps) {
+  const ref = useCallback((el: HTMLDivElement | null) => {
+    if (!onPreload || !el) return;
+    let timer: ReturnType<typeof setTimeout> | null = null;
+    const observer = new IntersectionObserver(([entry]) => {
+      if (entry.isIntersecting) {
+        timer = setTimeout(() => {
+          onPreload();
+          observer.disconnect();
+        }, 500);
+      } else if (timer != null) {
+        clearTimeout(timer);
+        timer = null;
+      }
+    }, { rootMargin: '200px' });
+    observer.observe(el);
+    return () => {
+      observer.disconnect();
+      if (timer != null) clearTimeout(timer);
+    };
+  }, [onPreload]);
+
   return (
     <ListBoxItem
+      ref={ref}
       id={id}
       href={href}
       textValue={textValue}
-      onHoverStart={onHoverStart}
       style={{
         gridTemplateColumns: [icon ? 'auto' : null, '1fr', trailingIcon ? 'auto' : null].filter(Boolean).join(' ')
       }}

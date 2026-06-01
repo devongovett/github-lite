@@ -300,12 +300,12 @@ function Reviewed({data}: {data: PullRequestReview}) {
               <CommentBody>{data.body}</CommentBody>
             </Card>
           }
-          {/*{data.comments.nodes?.map(comment => {
+          {data.comments.nodes?.map(comment => {
             let thread = threadsById.get(comment?.id);
             if (thread) {
               return <PullRequestThread key={thread.id} data={thread} />;
             }
-          })}*/}
+          })}
         </div>
       )}
     </div>
@@ -370,7 +370,7 @@ export function PullRequestThread({data}: {data: PullRequestReviewThread}) {
         </summary>
         <div className="flex flex-col gap-4 pt-3 mt-3 border-t border-daw-gray-200 whitespace-normal text-sm">
           {data.comments.nodes?.map(comment => (
-            <div key={comment!.id} className="flex flex-col gap-2 pb-4 border-b border-daw-gray-200">
+            <div key={comment!.id} className="flex flex-col gap-2 pb-4 border-b border-daw-gray-200 last:border-b-0 last:pb-0">
               <div className="flex justify-between items-center">
                 <div>
                   <User actor={comment!.author!} />
@@ -392,11 +392,6 @@ export function PullRequestThread({data}: {data: PullRequestReviewThread}) {
               {comment!.reactionGroups && <Reactions id={comment!.id} data={comment!.reactionGroups} />}
             </div>
           ))}
-          <CommentForm>
-            {data.viewerCanResolve &&
-              <Button onPress={resolveThread} className="shrink-0 px-4 py-2 rounded-md bg-daw-gray-300 pressed:bg-daw-gray-400 border border-daw-gray-400 pressed:border-daw-gray-500 text-daw-gray-800 text-sm font-medium cursor-default outline-none focus-visible:ring-2 ring-offset-2 ring-blue-600">Resolve conversation</Button>
-            }
-          </CommentForm>
         </div>
       </details>
     </Card>

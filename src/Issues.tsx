@@ -259,7 +259,7 @@ function IssueListItem({ issue, owner, repo }: { issue: Issue, owner: string, re
       id={`/${owner}/${repo}/issues/${issue.number}`}
       href={`/${owner}/${repo}/issues/${issue.number}`}
       textValue={issue.title}
-      onHoverStart={() => IssuePage.preload(owner, repo, issue.number)}
+      onPreload={() => IssuePage.preload(owner, repo, issue.number)}
       label={issue.title}
       description={description}
     />

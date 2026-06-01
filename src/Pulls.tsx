@@ -267,7 +267,7 @@ function PullListItem({pull, owner, repo}: {pull: PullRequest, owner: string, re
       id={`/${owner}/${repo}/pulls/${pull.number}`}
       href={`/${owner}/${repo}/pulls/${pull.number}`}
       textValue={pull.title}
-      onHoverStart={() => PullRequestPage.preload(owner, repo, pull.number)}
+      onPreload={() => PullRequestPage.preload(owner, repo, pull.number)}
       label={pull.title}
       description={description}
       trailingIcon={avatar}
