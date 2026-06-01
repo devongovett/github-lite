@@ -8,6 +8,7 @@ import { CheckCircleIcon, CommentDiscussionIcon } from '@primer/octicons-react';
 import { List, ListItem, EmptyDetail } from './List';
 import { Button, Input, RadioGroup, TextField } from 'react-aria-components';
 import { FilterSection, RadioItem, SearchBar, FilterPopoverWrapper, DISCUSSION_SORT_OPTIONS } from './Filters';
+import { useRenderGitHubEmojis } from './emoji';
 
 type DiscussionItem = {
   id: string;
@@ -200,6 +201,7 @@ function DiscussionFilterPopover({
   categories,
   activeCount, onClear
 }: DiscussionFilterPopoverProps) {
+  const renderGitHubEmojis = useRenderGitHubEmojis();
   return (
     <FilterPopoverWrapper activeCount={activeCount}>
       <FilterSection label="Status">
@@ -229,7 +231,7 @@ function DiscussionFilterPopover({
           <FilterSection label="Category">
             <RadioGroup value={category} onChange={onCategoryChange} aria-label="Category" className="flex flex-col gap-1">
               <RadioItem value="" label="Any" />
-              {categories.map(c => <RadioItem key={c.id} value={c.name} label={`${c.emoji} ${c.name}`} />)}
+              {categories.map(c => <RadioItem key={c.id} value={c.name} label={renderGitHubEmojis(`${c.emoji} ${c.name}`)} />)}
             </RadioGroup>
           </FilterSection>
         </>

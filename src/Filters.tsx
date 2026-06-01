@@ -45,7 +45,7 @@ export function FilterSection({label, children}: {label: string, children: React
   );
 }
 
-export function RadioItem({value, label, color}: {value: string, label: string, color?: string}) {
+export function RadioItem({value, label, color}: {value: string, label: ReactNode, color?: string}) {
   return (
     <Radio value={value} className="flex items-center gap-2 text-sm cursor-default outline-none focus-visible:ring-2 ring-blue-600 rounded py-0.5">
       {({isSelected}) => (

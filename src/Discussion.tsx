@@ -4,6 +4,7 @@ import Markdown from 'markdown-to-jsx';
 import { useState } from 'react';
 import { Button, Link } from 'react-aria-components';
 import { graphql, useQuery } from './client';
+import { useRenderGitHubEmojis } from './emoji';
 import { CommentCard, Reactions } from './CommentCard';
 import { CommentForm } from './CommentForm';
 import { Avatar, User } from './components';
@@ -82,6 +83,7 @@ ${Reactions.fragment}
 `;
 
 function DiscussionHeader({data}: {data: Discussion}) {
+  let renderGitHubEmojis = useRenderGitHubEmojis();
   return (
     <div className="flex flex-col gap-2 mb-2">
       <div className="flex gap-2 flex-wrap">
@@ -96,7 +98,7 @@ function DiscussionHeader({data}: {data: Discussion}) {
           {data.closed ? 'Closed' : 'Open'}
         </span>
         <span className="w-fit px-2 py-0.5 rounded border text-sm font-medium bg-daw-purple-100 border-daw-purple-200 text-daw-purple-700">
-          {data.category.emoji} {data.category.name}
+          {renderGitHubEmojis(data.category.emoji)} {data.category.name}
         </span>
       </div>
       <h1 className="text-2xl font-semibold"><Markdown>{data.title}</Markdown></h1>
