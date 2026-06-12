@@ -10,6 +10,7 @@ import { CommentCard } from './CommentCard';
 import { Timeline } from './Timeline';
 import { IssueCommentForm, CommentForm } from './CommentForm';
 import { Card, Status, User } from './components';
+import { RepoContext } from './SlideOver';
 import useSWR, {preload as swrPreload, mutate} from 'swr';
 import { CommentIcon } from '@primer/octicons-react';
 
@@ -136,6 +137,7 @@ export function PullRequestPage({owner, repo, number}: {owner: string, repo: str
 
   return (
     <PullRequestContext.Provider value={data}>
+    <RepoContext.Provider value={{owner, repo}}>
       <div className="flex flex-1 min-h-0">
         <div className="flex flex-col gap-4 px-4 pb-4 pt-2 -mr-4 max-w-3xl mx-auto w-[500px] overflow-auto text-sm">
           <Header data={data} />
@@ -204,6 +206,7 @@ export function PullRequestPage({owner, repo, number}: {owner: string, repo: str
           </div>
         </div>
       </div>
+    </RepoContext.Provider>
     </PullRequestContext.Provider>
   );
 }

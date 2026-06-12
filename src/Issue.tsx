@@ -9,7 +9,7 @@ import { Timeline } from './Timeline';
 import { CommentCard } from './CommentCard';
 import { Avatar, BranchName, Card, GithubLabel, IssueStatus, IssueTypeBadge } from './components';
 import { IssueCommentForm } from './CommentForm';
-import { GitHubLink } from './SlideOver';
+import { GitHubLink, RepoContext } from './SlideOver';
 
 export function IssuePage({owner, repo, number}: {owner: string, repo: string, number: number}) {
   let { data: res } = useQuery<{repository: Repository}>(IssuePage.query(), {owner, repo, number});
@@ -24,17 +24,19 @@ export function IssuePage({owner, repo, number}: {owner: string, repo: string, n
   }
 
   return (
-    <div className="flex flex-1 justify-center min-h-0 overflow-hidden">
-      <div className="overflow-y-auto">
-        <div className="flex flex-col gap-4 my-4 max-w-3xl mx-auto px-4">
-          <Header data={data} />
-          <CommentCard data={data} />
-          <Timeline items={data.timelineItems.nodes!} onDeleteComment={deleteComment} />
-          <IssueCommentForm issue={data} />
+    <RepoContext.Provider value={{owner, repo}}>
+      <div className="flex flex-1 justify-center min-h-0 overflow-hidden">
+        <div className="overflow-y-auto">
+          <div className="flex flex-col gap-4 my-4 max-w-3xl mx-auto px-4">
+            <Header data={data} />
+            <CommentCard data={data} />
+            <Timeline items={data.timelineItems.nodes!} onDeleteComment={deleteComment} />
+            <IssueCommentForm issue={data} />
+          </div>
         </div>
+        <IssueSidebar data={data} />
       </div>
-      <IssueSidebar data={data} />
-    </div>
+    </RepoContext.Provider>
   );
 }
 
