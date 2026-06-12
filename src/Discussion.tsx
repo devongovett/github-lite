@@ -9,6 +9,7 @@ import { CommentCard, Reactions } from './CommentCard';
 import { CommentForm } from './CommentForm';
 import { Avatar, User } from './components';
 import { mutate } from 'swr';
+import { RepoContext } from './SlideOver';
 
 export function DiscussionPage({owner, repo, number}: {owner: string, repo: string, number: number}) {
   let { data: res } = useQuery<{repository: Repository}>(DiscussionPage.query(), {owner, repo, number});
@@ -30,14 +31,16 @@ export function DiscussionPage({owner, repo, number}: {owner: string, repo: stri
   }
 
   return (
-    <div className="flex flex-col gap-4 my-4 w-full max-w-3xl mx-auto">
-      <DiscussionHeader data={data} />
-      <CommentCard data={data} />
-      {data.comments.nodes?.map(comment => comment && (
-        <DiscussionCommentItem key={comment.id} comment={comment} onDelete={deleteComment} onReply={addComment} />
-      ))}
-      <CommentForm onSubmit={addComment}>{null}</CommentForm>
-    </div>
+    <RepoContext.Provider value={{owner, repo}}>
+      <div className="flex flex-col gap-4 my-4 w-full max-w-3xl mx-auto">
+        <DiscussionHeader data={data} />
+        <CommentCard data={data} />
+        {data.comments.nodes?.map(comment => comment && (
+          <DiscussionCommentItem key={comment.id} comment={comment} onDelete={deleteComment} onReply={addComment} />
+        ))}
+        <CommentForm onSubmit={addComment}>{null}</CommentForm>
+      </div>
+    </RepoContext.Provider>
   );
 }
 

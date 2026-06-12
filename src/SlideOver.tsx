@@ -27,6 +27,9 @@ export function useSlideOver() {
   return useContext(SlideOverContext);
 }
 
+// The repository whose content is currently being displayed.
+export const RepoContext = createContext<{owner: string, repo: string} | null>(null);
+
 export function parseGitHubUrl(url: string): SlideOverContent | null {
   try {
     const parsed = new URL(url);
@@ -206,9 +209,44 @@ function preloadContent(content: SlideOverContent) {
   }
 }
 
+// Formats an issue/PR/discussion/commit URL as a short reference, e.g. "#123", "owner/repo#123", or "abc1234".
+function formatGitHubReference(href: string, content: SlideOverContent, currentRepo: {owner: string, repo: string} | null): string | null {
+  const url = new URL(href);
+  if (url.pathname.split('/').filter(Boolean).length !== 4 || url.search) {
+    return null;
+  }
+
+  const isCurrentRepo = currentRepo
+    && content.owner.toLowerCase() === currentRepo.owner.toLowerCase()
+    && content.repo.toLowerCase() === currentRepo.repo.toLowerCase();
+  if (content.type === 'commit') {
+    if (!/^[0-9a-f]{40}$/.test(content.sha)) {
+      return null;
+    }
+    const sha = content.sha.slice(0, 7);
+    return isCurrentRepo ? sha : `${content.owner}/${content.repo}@${sha}`;
+  }
+
+  let suffix = '';
+  if (/^#(issuecomment|discussioncomment)-/.test(url.hash)) {
+    suffix = ' (comment)';
+  } else if (/^#pullrequestreview-/.test(url.hash)) {
+    suffix = ' (review)';
+  }
+  const prefix = isCurrentRepo ? '' : `${content.owner}/${content.repo}`;
+  return `${prefix}#${content.number}${suffix}`;
+}
+
 export function GitHubLink({ href, children, className, ...props }: LinkProps) {
   const { open } = useSlideOver();
+  const currentRepo = useContext(RepoContext);
   const content = href ? parseGitHubUrl(href) : null;
+
+  // Autolinked bare URLs (link text is the URL itself) render as short references.
+  const text = Array.isArray(children) && children.length === 1 ? children[0] : children;
+  if (href && content && typeof text === 'string' && text === href) {
+    children = formatGitHubReference(href, content, currentRepo) ?? children;
+  }
 
   if (content) {
     return (
