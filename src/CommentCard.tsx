@@ -8,6 +8,7 @@ import { Avatar, Card } from './components';
 import { graphql } from './client';
 import { File } from '@pierre/diffs/react';
 import { GitHubLink } from './SlideOver';
+import { replaceCodeReferences } from './CodeReference';
 
 export function CommentCard({data, onDelete}: {data: Issue | PullRequest | IssueComment | Discussion | DiscussionComment, onDelete?: () => Promise<void>}) {
   let df = useDateFormatter({
@@ -86,6 +87,9 @@ export function CommentBody({children}: {children: string}) {
   return (
     <Markdown className="[word-break:break-word]" options={{
       disableParsingRawHTML: true,
+      // Always wrap in block elements so single-paragraph comments go through
+      // the p override below.
+      forceBlock: true,
       overrides: {
         img: {props: {style: {maxWidth: '100%'}}},
         pre: {
@@ -122,6 +126,15 @@ export function CommentBody({children}: {children: string}) {
           component: (props: any) => <GitHubLink {...props} className="underline">{props.children}</GitHubLink>
         },
         p: {
+          component: (props: any) => {
+            // Bare permalinks render as code snippets, like github.com.
+            // A div is used instead of a p since the snippets are blocks.
+            let replaced = replaceCodeReferences(props.children);
+            if (replaced) {
+              return replaced.length === 1 ? replaced[0] : <div {...props}>{replaced}</div>;
+            }
+            return <p {...props} />;
+          },
           props: {
             className: 'my-2',
             style: {
@@ -136,6 +149,10 @@ export function CommentBody({children}: {children: string}) {
           props: {className: 'list-decimal pl-4'}
         },
         li: {
+          component: (props: any) => {
+            let replaced = replaceCodeReferences(props.children);
+            return replaced ? <li {...props}>{replaced}</li> : <li {...props} />;
+          },
           props: {
             className: 'my-1'
           }

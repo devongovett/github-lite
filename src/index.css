@@ -119,3 +119,8 @@ diffs-container {
   border: none;
   box-shadow: var(--shadow);
 }
+
+.code-reference diffs-container {
+  border: none;
+  border-radius: 0;
+}
